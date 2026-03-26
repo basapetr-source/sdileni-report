@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sdílení energie - Report</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f0f2f5; color: #1a1a2e; line-height: 1.5; }
+  .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; padding: 24px 32px; }
+  .header h1 { font-size: 24px; font-weight: 600; }
+  .header .subtitle { color: #a0aec0; font-size: 14px; margin-top: 4px; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+  .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+  .card-group { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .card-group .group-title { font-size: 13px; text-transform: uppercase; color: #718096; letter-spacing: 0.5px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+  .card-group .metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .metric .label { font-size: 11px; color: #a0aec0; font-weight: 600; }
+  .metric .value { font-size: 22px; font-weight: 700; margin-top: 2px; }
+  .metric .unit { font-size: 12px; color: #718096; font-weight: 400; }
+  .metric.green .value { color: #38a169; }
+  .metric.blue .value { color: #3182ce; }
+  .metric.orange .value { color: #dd6b20; }
+  .metric.purple .value { color: #805ad5; }
+  @media (max-width: 900px) { .cards-grid { grid-template-columns: 1fr; } }
+
+  .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .section h2 { font-size: 18px; font-weight: 600; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+  .section h3 { font-size: 15px; font-weight: 600; margin: 16px 0 8px; color: #4a5568; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #f7fafc; text-align: left; padding: 10px 12px; font-weight: 600; color: #4a5568; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+  td { padding: 8px 12px; border-bottom: 1px solid #edf2f7; }
+  tr:hover td { background: #f7fafc; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .eff { font-weight: 600; }
+  .eff-high { color: #38a169; }
+  .eff-mid { color: #dd6b20; }
+  .eff-low { color: #e53e3e; }
+  .owner-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .owner-mpp { background: #ebf8ff; color: #2b6cb0; }
+  .owner-pnf { background: #faf5ff; color: #6b46c1; }
+  .owner-tnm { background: #fff5f5; color: #c53030; }
+  .owner-basa { background: #fffff0; color: #975a16; }
+  .owner-default { background: #f0fff4; color: #276749; }
+
+  .tab-container { margin-bottom: 16px; }
+  .tab-buttons { display: flex; gap: 4px; border-bottom: 2px solid #e2e8f0; }
+  .tab-btn { padding: 8px 16px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #a0aec0; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .tab-btn.active { color: #3182ce; border-bottom-color: #3182ce; }
+  .tab-content { display: none; padding-top: 16px; }
+  .tab-content.active { display: block; }
+
+  .flow-matrix th.rotate { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); max-width: 40px; }
+  .flow-matrix td.highlight { background: #ebf8ff; font-weight: 600; }
+
+  .filter-bar { margin-bottom: 16px; }
+  .filter-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
+  .filter-label { font-size: 13px; font-weight: 600; color: #4a5568; min-width: 50px; }
+  .month-btn { padding: 6px 14px; border: 1px solid #e2e8f0; border-radius: 6px; background: white; cursor: pointer; font-size: 13px; }
+  .month-btn.active { background: #3182ce; color: white; border-color: #3182ce; }
+
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    table { font-size: 11px; }
+    th, td { padding: 6px 8px; }
+    .card .value { font-size: 22px; }
+  }
+
+  .table-scroll { overflow-x: auto; }
+  .total-row td { font-weight: 700; background: #f7fafc !important; border-top: 2px solid #e2e8f0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Sdílení energie - Energetické společenství</h1>
+  <div class="subtitle">Vygenerováno: 26. 3. 2026 12:23:08 | Data: Únor 2026, Březen 2026</div>
+</div>
+
+<div class="container">
+
+<!-- Summary Cards -->
+<div class="cards-grid" id="summary-cards"></div>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <div class="filter-row" id="year-filter"></div>
+  <div class="filter-row" id="month-filter"></div>
+</div>
+
+<!-- Section: Přehled výroben -->
+<div class="section">
+  <h2>Výrobny - přehled sdílení</h2>
+  <div class="table-scroll" id="producers-table"></div>
+</div>
+
+<!-- Section: Přehled odběrných míst -->
+<div class="section">
+  <h2>Odběrná místa - přehled sdílení</h2>
+  <div class="table-scroll" id="consumers-table"></div>
+</div>
+
+<!-- Section: Přehled podle vlastníků -->
+<div class="section">
+  <h2>Přehled podle vlastníků</h2>
+  <div class="tab-container">
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="showTab('owner-prod')">Výroba a sdílení</button>
+      <button class="tab-btn" onclick="showTab('owner-cons')">Spotřeba a přijaté sdílení</button>
+    </div>
+    <div class="tab-content active" id="tab-owner-prod"></div>
+    <div class="tab-content" id="tab-owner-cons"></div>
+  </div>
+</div>
+
+<!-- Section: Tok energie vlastník→vlastník -->
+<div class="section">
+  <h2>Tok sdílené energie mezi vlastníky</h2>
+  <div class="table-scroll" id="owner-flow-table"></div>
+</div>
+
+<!-- Section: Detailní alokace zdroj→odběr -->
+<div class="section">
+  <h2>Detailní alokace: zdroj &rarr; odběrné místo</h2>
+  <div class="table-scroll" id="detail-alloc-table"></div>
+</div>
+
+<!-- Section: Optimalizace alokačních klíčů -->
+<div class="section" id="optimization-section" style="display:none">
+  <h2>Optimalizace alokačních klíčů</h2>
+  <div class="cards-grid" id="optimization-cards"></div>
+  <div id="optimization-tables"></div>
+</div>
+
+</div>
+
+<script>
+// ──── EMBEDDED DATA ────
+const months = ["2026-02","2026-03"];
+const monthLabels = {"2026-02":"Únor 2026","2026-03":"Březen 2026"};
+const producers = {"859182400611105588":{"name":"Garáže 1","owner":"MPP Alfa, a.s."},"859182400611230242":{"name":"Garáže 2","owner":"MPP Alfa, a.s."},"859182400611058020":{"name":"PNF","owner":"Polabský nadační fond"},"859182400611057405":{"name":"Záložna","owner":"MPP Alfa, a.s."},"859182400708354370":{"name":"TNM","owner":"TNM PRINT s.r.o."}};
+const consumers = {"859182400601576053":{"name":"Lica 1.PP+1.NP","owner":"MPP Alfa, a.s."},"859182400601576077":{"name":"Lica Výtah, chodby","owner":"MPP Alfa, a.s."},"859182400601576084":{"name":"Lica 2 NP","owner":"MPP Alfa, a.s."},"859182400601576091":{"name":"Lica 3 NP","owner":"MPP Alfa, a.s."},"859182400601729169":{"name":"Boleslavská O2","owner":"MPP Alfa, a.s."},"859182400601794679":{"name":"Lica 4.NP klimatizace","owner":"MPP Alfa, a.s."},"859182400608727717":{"name":"Boleslavská společné prostory","owner":"MPP Alfa, a.s."},"859182400601059136":{"name":"Záložna","owner":"MPP Alfa, a.s."},"859182400601613192":{"name":"Koněvova ubytovna","owner":"MPP Alfa, a.s."},"859182400604363094":{"name":"Jižní 2233","owner":"Petr Báša"},"859182400607640871":{"name":"Lica byt B","owner":"MPP Alfa, a.s."},"859182400708354387":{"name":"TNM Print","owner":"TNM PRINT s.r.o."},"859182400609281935":{"name":"Palackeho obchod","owner":"MPP Alfa, a.s."},"859182400610386308":{"name":"Řadovka PDY","owner":"MPP Alfa, a.s."},"859182400611105595":{"name":"Topolová myčka/garáže","owner":"MPP Alfa, a.s."},"859182400611058037":{"name":"PNF č.p. 167","owner":"Polabský nadační fond"},"859182400601611853":{"name":"Diwang restaurace","owner":"MPP Alfa, a.s."}};
+const producerStats = {"859182400611057405":{"2026-02":{"production":370.85999999999945,"shared":298.0999999999973,"surplus":72.76000000000217},"2026-03":{"production":268.33000000000027,"shared":194.34999999999957,"surplus":73.98000000000069}},"859182400611058020":{"2026-02":{"production":872.1799999999675,"shared":598.6399999999613,"surplus":273.5400000000062},"2026-03":{"production":1419.8099999999808,"shared":1022.3199999999808,"surplus":397.48999999999995}},"859182400611105588":{"2026-02":{"production":1854.8399999999629,"shared":1545.1999999999534,"surplus":309.64000000000954},"2026-03":{"production":2818.710000000021,"shared":2342.9200000000296,"surplus":475.7899999999913}},"859182400708354370":{"2026-02":{"production":1009.3999999999995,"shared":277.9199999999994,"surplus":731.4800000000001},"2026-03":{"production":1896.3599999999997,"shared":366.62000000000035,"surplus":1529.7399999999993}}};
+const consumerStats = {"859182400601059136":{"2026-02":{"consumption":8181.160000000042,"received":189.49999999998545,"fromGrid":7991.660000000056},"2026-03":{"consumption":2841.8399999999997,"received":304.64000000000533,"fromGrid":2537.1999999999944}},"859182400601576053":{"2026-02":{"consumption":1887.8999999999353,"received":149.49999999998636,"fromGrid":1738.399999999949},"2026-03":{"consumption":782.8299999999873,"received":217.2999999999937,"fromGrid":565.5299999999936}},"859182400601576077":{"2026-02":{"consumption":179.62000000000728,"received":11.68000000000086,"fromGrid":167.94000000000642},"2026-03":{"consumption":72.07000000000122,"received":17.940000000000076,"fromGrid":54.13000000000114}},"859182400601576084":{"2026-02":{"consumption":1923.9800000000648,"received":166.0599999999988,"fromGrid":1757.920000000066},"2026-03":{"consumption":789.25000000001,"received":231.22000000000662,"fromGrid":558.0300000000034}},"859182400601576091":{"2026-02":{"consumption":1027.3399999999988,"received":73.01999999999953,"fromGrid":954.3199999999993},"2026-03":{"consumption":393.8700000000013,"received":112.86000000000132,"fromGrid":281.01}},"859182400601613192":{"2026-02":{"consumption":5068.680000000012,"received":220.45999999998185,"fromGrid":4848.22000000003},"2026-03":{"consumption":1782.0899999999972,"received":234.98999999999887,"fromGrid":1547.0999999999983}},"859182400601729169":{"2026-02":{"consumption":3252.0400000000036,"received":274.69999999998845,"fromGrid":2977.340000000015},"2026-03":{"consumption":1338.6900000000264,"received":393.7800000000291,"fromGrid":944.9099999999974}},"859182400601794679":{"2026-02":{"consumption":2099.6000000000427,"received":147.32000000001585,"fromGrid":1952.2800000000268},"2026-03":{"consumption":866.0099999999929,"received":195.17999999999677,"fromGrid":670.8299999999962}},"859182400604363094":{"2026-02":{"consumption":1483.3799999999392,"received":22.860000000000127,"fromGrid":1460.519999999939},"2026-03":{"consumption":240.87999999999894,"received":38.79999999999967,"fromGrid":202.07999999999927}},"859182400607640871":{"2026-02":{"consumption":521.420000000007,"received":36.600000000000364,"fromGrid":484.82000000000664},"2026-03":{"consumption":204.61000000000172,"received":35.50000000000006,"fromGrid":169.11000000000166}},"859182400608727717":{"2026-02":{"consumption":420.2999999999959,"received":23.480000000001098,"fromGrid":396.8199999999948},"2026-03":{"consumption":174.7400000000009,"received":29.11000000000007,"fromGrid":145.63000000000082}},"859182400611058037":{"2026-02":{"consumption":798.6999999999413,"received":5.439999999996758,"fromGrid":793.2599999999445},"2026-03":{"consumption":54.93000000000208,"received":3.480000000000281,"fromGrid":51.4500000000018}},"859182400611105595":{"2026-02":{"consumption":1517.0799999999165,"received":25.119999999991933,"fromGrid":1491.9599999999245},"2026-03":{"consumption":64.83000000000189,"received":10.110000000000333,"fromGrid":54.720000000001555}},"859182400708354387":{"2026-02":{"consumption":113651.56000000032,"received":1374.1200000002136,"fromGrid":112277.4400000001},"2026-03":{"consumption":42707.959999999985,"received":1703.6899999999732,"fromGrid":41004.27000000001}},"859182400609281935":{"2026-03":{"consumption":1796.5700000000097,"received":350.91000000000395,"fromGrid":1445.6600000000058}},"859182400610386308":{"2026-03":{"consumption":266.95000000000806,"received":46.70000000000198,"fromGrid":220.25000000000608}}};
+const ownerProduction = {"MPP Alfa, a.s.":{"2026-02":{"production":2225.6999999999625,"shared":1843.2999999999506,"surplus":382.4000000000117},"2026-03":{"production":3087.0400000000213,"shared":2537.270000000029,"surplus":549.769999999992}},"Petr Báša":{"2026-02":{"production":0,"shared":0,"surplus":0},"2026-03":{"production":0,"shared":0,"surplus":0}},"TNM PRINT s.r.o.":{"2026-02":{"production":1009.3999999999995,"shared":277.9199999999994,"surplus":731.4800000000001},"2026-03":{"production":1896.3599999999997,"shared":366.62000000000035,"surplus":1529.7399999999993}},"Polabský nadační fond":{"2026-02":{"production":872.1799999999675,"shared":598.6399999999613,"surplus":273.5400000000062},"2026-03":{"production":1419.8099999999808,"shared":1022.3199999999808,"surplus":397.48999999999995}}};
+const ownerConsumption = {"MPP Alfa, a.s.":{"2026-02":{"consumption":26079.120000000028,"received":1317.4399999999507,"fromGrid":24761.68000000008},"2026-03":{"consumption":11374.350000000039,"received":2180.2400000000384,"fromGrid":9194.109999999999}},"Petr Báša":{"2026-02":{"consumption":1483.3799999999392,"received":22.860000000000127,"fromGrid":1460.519999999939},"2026-03":{"consumption":240.87999999999894,"received":38.79999999999967,"fromGrid":202.07999999999927}},"TNM PRINT s.r.o.":{"2026-02":{"consumption":113651.56000000032,"received":1374.1200000002136,"fromGrid":112277.4400000001},"2026-03":{"consumption":42707.959999999985,"received":1703.6899999999732,"fromGrid":41004.27000000001}},"Polabský nadační fond":{"2026-02":{"consumption":798.6999999999413,"received":5.439999999996758,"fromGrid":793.2599999999445},"2026-03":{"consumption":54.93000000000208,"received":3.480000000000281,"fromGrid":51.4500000000018}}};
+const ownerAllocMatrix = {"MPP Alfa, a.s.":{"MPP Alfa, a.s.":{"2026-02":822.08,"2026-03":1389.1599999999999},"TNM PRINT s.r.o.":{"2026-02":1007.899999999993,"2026-03":1135.4299999999987},"Polabský nadační fond":{"2026-02":3.499999999999995,"2026-03":1.6600000000000008},"Petr Báša":{"2026-02":9.819999999999988,"2026-03":11.01999999999998}},"Polabský nadační fond":{"TNM PRINT s.r.o.":{"2026-02":366.21999999999724,"2026-03":568.2599999999985},"MPP Alfa, a.s.":{"2026-02":228.6400000000001,"2026-03":448.5899999999999},"Petr Báša":{"2026-02":3.7799999999999954,"2026-03":5.469999999999988}},"TNM PRINT s.r.o.":{"MPP Alfa, a.s.":{"2026-02":266.72,"2026-03":342.4899999999999},"Polabský nadační fond":{"2026-02":1.9400000000000013,"2026-03":1.8200000000000014},"Petr Báša":{"2026-02":9.259999999999991,"2026-03":22.310000000000063}}};
+const detailAlloc = {"859182400611057405":{"859182400601576053":{"2026-02":8.639999999999892,"2026-03":6.179999999999947},"859182400601576084":{"2026-02":9.619999999999873,"2026-03":6.879999999999938},"859182400601613192":{"2026-02":8.919999999999893,"2026-03":5.86999999999996},"859182400601729169":{"2026-02":19.91999999999994,"2026-03":14.239999999999876},"859182400601794679":{"2026-02":13.639999999999842,"2026-03":6.999999999999962},"859182400611105595":{"2026-02":15.959999999999802,"2026-03":5.289999999999969},"859182400708354387":{"2026-02":216.9600000000001,"2026-03":135.93999999999986},"859182400601576091":{"2026-02":2.5199999999999902,"2026-03":1.9800000000000015},"859182400608727717":{"2026-02":1.7000000000000013,"2026-03":1.0400000000000007},"859182400611058037":{"2026-02":0.22000000000000006,"2026-03":0.16},"859182400609281935":{"2026-03":9.769999999999902}},"859182400611105588":{"859182400708354387":{"2026-02":790.9399999999929,"2026-03":999.4899999999988},"859182400601059136":{"2026-02":132.98000000000098,"2026-03":211.31000000000003},"859182400601729169":{"2026-02":152.76000000000016,"2026-03":240.33999999999986},"859182400601794679":{"2026-02":102.50000000000006,"2026-03":158.26000000000016},"859182400601576053":{"2026-02":89.41999999999989,"2026-03":142.63000000000022},"859182400601576084":{"2026-02":96.73999999999984,"2026-03":147.59000000000015},"859182400601613192":{"2026-02":79.59999999999992,"2026-03":106.36000000000006},"859182400601576091":{"2026-02":48.30000000000021,"2026-03":77.9300000000001},"859182400608727717":{"2026-02":16.879999999999928,"2026-03":23.629999999999995},"859182400611058037":{"2026-02":3.279999999999995,"2026-03":1.5000000000000009},"859182400601576077":{"2026-02":9.339999999999964,"2026-03":15.449999999999868},"859182400604363094":{"2026-02":9.819999999999988,"2026-03":11.01999999999998},"859182400607640871":{"2026-02":12.639999999999986,"2026-03":17.099999999999962},"859182400609281935":{"2026-03":164.45999999999995},"859182400610386308":{"2026-03":25.850000000000023}},"859182400611058020":{"859182400708354387":{"2026-02":366.21999999999724,"2026-03":568.2599999999985},"859182400601576053":{"2026-02":34.62000000000005,"2026-03":52.36},"859182400601576084":{"2026-02":42.22000000000005,"2026-03":62.47000000000002},"859182400601576091":{"2026-02":14.979999999999972,"2026-03":26.31000000000001},"859182400601613192":{"2026-02":34.64000000000002,"2026-03":43.190000000000026},"859182400601729169":{"2026-02":63.86000000000003,"2026-03":100.51999999999997},"859182400604363094":{"2026-02":3.7799999999999954,"2026-03":5.469999999999988},"859182400601059136":{"2026-02":18.439999999999998,"2026-03":40.54},"859182400601576077":{"2026-02":0.8600000000000005,"2026-03":1.0400000000000005},"859182400601794679":{"2026-02":11.11999999999999,"2026-03":11.939999999999987},"859182400607640871":{"2026-02":3.819999999999995,"2026-03":3.0299999999999963},"859182400608727717":{"2026-02":1.540000000000001,"2026-03":1.7700000000000007},"859182400611105595":{"2026-02":2.539999999999999,"2026-03":1.4000000000000008},"859182400609281935":{"2026-03":94.31},"859182400610386308":{"2026-03":9.709999999999948}},"859182400708354370":{"859182400601059136":{"2026-02":38.08,"2026-03":52.790000000000006},"859182400601613192":{"2026-02":97.3,"2026-03":79.56999999999995},"859182400601729169":{"2026-02":38.16000000000002,"2026-03":38.67999999999999},"859182400601794679":{"2026-02":20.060000000000002,"2026-03":17.979999999999993},"859182400611105595":{"2026-02":6.619999999999992,"2026-03":3.419999999999995},"859182400601576053":{"2026-02":16.819999999999993,"2026-03":16.129999999999995},"859182400601576084":{"2026-02":17.479999999999986,"2026-03":14.279999999999998},"859182400601576091":{"2026-02":7.219999999999996,"2026-03":6.639999999999993},"859182400611058037":{"2026-02":1.9400000000000013,"2026-03":1.8200000000000014},"859182400601576077":{"2026-02":1.4800000000000009,"2026-03":1.4500000000000008},"859182400604363094":{"2026-02":9.259999999999991,"2026-03":22.310000000000063},"859182400607640871":{"2026-02":20.14,"2026-03":15.369999999999992},"859182400608727717":{"2026-02":3.359999999999997,"2026-03":2.67},"859182400609281935":{"2026-03":82.37},"859182400610386308":{"2026-03":11.139999999999992}}};
+const owners = ["MPP Alfa, a.s.","Petr Báša","TNM PRINT s.r.o.","Polabský nadační fond"];
+const optData = {"summary":{"totalProduction":8456.850000000572,"currentShared":5439.669999999956,"optimizedShared":5500.140000000014,"theoreticalMax":5569.890000000034,"currentEfficiency":64.32264968634406,"optimizedEfficiency":65.03769133896951,"theoreticalMaxEfficiency":65.8624665212184,"improvement":60.47000000005755,"improvementPct":0.7150416526254275},"perProducer":[{"ean":"859182400611230242","name":"Garáže 2","owner":"MPP Alfa, a.s.","currentShared":0,"optimizedShared":0,"consumers":[{"ean":"859182400601576053","name":"Lica 1.PP+1.NP","owner":"MPP Alfa, a.s.","currentKey":0.05,"optimizedKey":0.05},{"ean":"859182400601576077","name":"Lica Výtah, chodby","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.01},{"ean":"859182400601576084","name":"Lica 2 NP","owner":"MPP Alfa, a.s.","currentKey":0.05,"optimizedKey":0.05},{"ean":"859182400601576091","name":"Lica 3 NP","owner":"MPP Alfa, a.s.","currentKey":0.03,"optimizedKey":0.03},{"ean":"859182400601729169","name":"Boleslavská O2","owner":"MPP Alfa, a.s.","currentKey":0.08,"optimizedKey":0.08},{"ean":"859182400601794679","name":"Lica 4.NP klimatizace","owner":"MPP Alfa, a.s.","currentKey":0.08,"optimizedKey":0.08},{"ean":"859182400608727717","name":"Boleslavská společné prostory","owner":"MPP Alfa, a.s.","currentKey":0.03,"optimizedKey":0.03},{"ean":"859182400601059136","name":"Záložna","owner":"MPP Alfa, a.s.","currentKey":0.1,"optimizedKey":0.1},{"ean":"859182400708354387","name":"TNM Print","owner":"TNM PRINT s.r.o.","currentKey":0.35,"optimizedKey":0.35},{"ean":"859182400609281935","name":"Palackeho obchod","owner":"MPP Alfa, a.s.","currentKey":0.02,"optimizedKey":0.02},{"ean":"859182400610386308","name":"Řadovka PDY","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.01},{"ean":"859182400611105595","name":"Topolová myčka/garáže","owner":"MPP Alfa, a.s.","currentKey":0.06,"optimizedKey":0.06},{"ean":"859182400601611853","name":"Diwang restaurace","owner":"MPP Alfa, a.s.","currentKey":0.04,"optimizedKey":0.04},{"ean":"859182400601613192","name":"Koněvova ubytovna","owner":"MPP Alfa, a.s.","currentKey":0.05,"optimizedKey":0.05},{"ean":"859182400604363094","name":"Jižní 2233","owner":"Petr Báša","currentKey":0.01,"optimizedKey":0.01},{"ean":"859182400607640871","name":"Lica byt B","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.01},{"ean":"859182400611058037","name":"PNF č.p. 167","owner":"Polabský nadační fond","currentKey":0.02,"optimizedKey":0.02}]},{"ean":"859182400611105588","name":"Garáže 1","owner":"MPP Alfa, a.s.","currentShared":3218.260000000082,"optimizedShared":3072.5800000001304,"consumers":[{"ean":"859182400601576053","name":"Lica 1.PP+1.NP","owner":"MPP Alfa, a.s.","currentKey":0.05,"optimizedKey":0.035},{"ean":"859182400601576077","name":"Lica Výtah, chodby","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.005},{"ean":"859182400601576084","name":"Lica 2 NP","owner":"MPP Alfa, a.s.","currentKey":0.05,"optimizedKey":0.045},{"ean":"859182400601576091","name":"Lica 3 NP","owner":"MPP Alfa, a.s.","currentKey":0.03,"optimizedKey":0.015},{"ean":"859182400601729169","name":"Boleslavská O2","owner":"MPP Alfa, a.s.","currentKey":0.08,"optimizedKey":0.08},{"ean":"859182400601794679","name":"Lica 4.NP klimatizace","owner":"MPP Alfa, a.s.","currentKey":0.08,"optimizedKey":0.005},{"ean":"859182400608727717","name":"Boleslavská společné prostory","owner":"MPP Alfa, a.s.","currentKey":0.03,"optimizedKey":0.005},{"ean":"859182400601059136","name":"Záložna","owner":"MPP Alfa, a.s.","currentKey":0.1,"optimizedKey":0.005},{"ean":"859182400708354387","name":"TNM Print","owner":"TNM PRINT s.r.o.","currentKey":0.38,"optimizedKey":0.685},{"ean":"859182400609281935","name":"Palackeho obchod","owner":"MPP Alfa, a.s.","currentKey":0.02,"optimizedKey":0.04},{"ean":"859182400610386308","name":"Řadovka PDY","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.01},{"ean":"859182400601611853","name":"Diwang restaurace","owner":"MPP Alfa, a.s.","currentKey":0.06,"optimizedKey":0.01},{"ean":"859182400601613192","name":"Koněvova ubytovna","owner":"MPP Alfa, a.s.","currentKey":0.05,"optimizedKey":0.02},{"ean":"859182400604363094","name":"Jižní 2233","owner":"Petr Báša","currentKey":0.01,"optimizedKey":0.01},{"ean":"859182400607640871","name":"Lica byt B","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.01},{"ean":"859182400611058037","name":"PNF č.p. 167","owner":"Polabský nadační fond","currentKey":0.02,"optimizedKey":0.01},{"ean":"859182400611105595","name":"Topolová myčka/garáže","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.01}]},{"ean":"859182400611058020","name":"PNF","owner":"Polabský nadační fond","currentShared":1383.7499999999213,"optimizedShared":1482.809999999903,"consumers":[{"ean":"859182400601576053","name":"Lica 1.PP+1.NP","owner":"MPP Alfa, a.s.","currentKey":0.05,"optimizedKey":0.055},{"ean":"859182400601576077","name":"Lica Výtah, chodby","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.005},{"ean":"859182400601576084","name":"Lica 2 NP","owner":"MPP Alfa, a.s.","currentKey":0.05,"optimizedKey":0.055},{"ean":"859182400601576091","name":"Lica 3 NP","owner":"MPP Alfa, a.s.","currentKey":0.03,"optimizedKey":0.03},{"ean":"859182400601729169","name":"Boleslavská O2","owner":"MPP Alfa, a.s.","currentKey":0.08,"optimizedKey":0.075},{"ean":"859182400601794679","name":"Lica 4.NP klimatizace","owner":"MPP Alfa, a.s.","currentKey":0.07,"optimizedKey":0.055},{"ean":"859182400608727717","name":"Boleslavská společné prostory","owner":"MPP Alfa, a.s.","currentKey":0.02,"optimizedKey":0.005},{"ean":"859182400601059136","name":"Záložna","owner":"MPP Alfa, a.s.","currentKey":0.1,"optimizedKey":0.065},{"ean":"859182400708354387","name":"TNM Print","owner":"TNM PRINT s.r.o.","currentKey":0.37,"optimizedKey":0.5},{"ean":"859182400609281935","name":"Palackeho obchod","owner":"MPP Alfa, a.s.","currentKey":0.02,"optimizedKey":0.11},{"ean":"859182400610386308","name":"Řadovka PDY","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.005},{"ean":"859182400611105595","name":"Topolová myčka/garáže","owner":"MPP Alfa, a.s.","currentKey":0.06,"optimizedKey":0.005},{"ean":"859182400601613192","name":"Koněvova ubytovna","owner":"MPP Alfa, a.s.","currentKey":0.05,"optimizedKey":0.01},{"ean":"859182400604363094","name":"Jižní 2233","owner":"Petr Báša","currentKey":0.01,"optimizedKey":0.005},{"ean":"859182400607640871","name":"Lica byt B","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.005},{"ean":"859182400601611853","name":"Diwang restaurace","owner":"MPP Alfa, a.s.","currentKey":0.05,"optimizedKey":0.005},{"ean":"859182400611058037","name":"PNF č.p. 167","owner":"Polabský nadační fond","currentKey":0.01,"optimizedKey":0.01}]},{"ean":"859182400611057405","name":"Záložna","owner":"MPP Alfa, a.s.","currentShared":378.6899999999603,"optimizedShared":391.859999999991,"consumers":[{"ean":"859182400601576053","name":"Lica 1.PP+1.NP","owner":"MPP Alfa, a.s.","currentKey":0.05,"optimizedKey":0.295},{"ean":"859182400601576077","name":"Lica Výtah, chodby","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.005},{"ean":"859182400601576084","name":"Lica 2 NP","owner":"MPP Alfa, a.s.","currentKey":0.05,"optimizedKey":0.005},{"ean":"859182400601576091","name":"Lica 3 NP","owner":"MPP Alfa, a.s.","currentKey":0.03,"optimizedKey":0.005},{"ean":"859182400601729169","name":"Boleslavská O2","owner":"MPP Alfa, a.s.","currentKey":0.08,"optimizedKey":0.005},{"ean":"859182400601794679","name":"Lica 4.NP klimatizace","owner":"MPP Alfa, a.s.","currentKey":0.08,"optimizedKey":0.005},{"ean":"859182400608727717","name":"Boleslavská společné prostory","owner":"MPP Alfa, a.s.","currentKey":0.03,"optimizedKey":0.005},{"ean":"859182400708354387","name":"TNM Print","owner":"TNM PRINT s.r.o.","currentKey":0.4,"optimizedKey":0.4},{"ean":"859182400609281935","name":"Palackeho obchod","owner":"MPP Alfa, a.s.","currentKey":0.02,"optimizedKey":0.005},{"ean":"859182400610386308","name":"Řadovka PDY","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.005},{"ean":"859182400611105595","name":"Topolová myčka/garáže","owner":"MPP Alfa, a.s.","currentKey":0.1,"optimizedKey":0.005},{"ean":"859182400611058037","name":"PNF č.p. 167","owner":"Polabský nadační fond","currentKey":0.02,"optimizedKey":0.005},{"ean":"859182400601059136","name":"Záložna","owner":"MPP Alfa, a.s.","currentKey":0.02,"optimizedKey":0.005},{"ean":"859182400601613192","name":"Koněvova ubytovna","owner":"MPP Alfa, a.s.","currentKey":0.05,"optimizedKey":0.225},{"ean":"859182400604363094","name":"Jižní 2233","owner":"Petr Báša","currentKey":0.01,"optimizedKey":0.005},{"ean":"859182400607640871","name":"Lica byt B","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.01},{"ean":"859182400601611853","name":"Diwang restaurace","owner":"MPP Alfa, a.s.","currentKey":0.03,"optimizedKey":0.01}]},{"ean":"859182400708354370","name":"TNM","owner":"TNM PRINT s.r.o.","currentShared":458.969999999992,"optimizedShared":552.8899999999896,"consumers":[{"ean":"859182400601613192","name":"Koněvova ubytovna","owner":"MPP Alfa, a.s.","currentKey":0.1,"optimizedKey":0.21},{"ean":"859182400604363094","name":"Jižní 2233","owner":"Petr Báša","currentKey":0.02,"optimizedKey":0.06},{"ean":"859182400607640871","name":"Lica byt B","owner":"MPP Alfa, a.s.","currentKey":0.02,"optimizedKey":0.04},{"ean":"859182400611058037","name":"PNF č.p. 167","owner":"Polabský nadační fond","currentKey":0.05,"optimizedKey":0.005},{"ean":"859182400611105595","name":"Topolová myčka/garáže","owner":"MPP Alfa, a.s.","currentKey":0.12,"optimizedKey":0.005},{"ean":"859182400601611853","name":"Diwang restaurace","owner":"MPP Alfa, a.s.","currentKey":0.06,"optimizedKey":0.005},{"ean":"859182400601059136","name":"Záložna","owner":"MPP Alfa, a.s.","currentKey":0.2,"optimizedKey":0.17},{"ean":"859182400601576053","name":"Lica 1.PP+1.NP","owner":"MPP Alfa, a.s.","currentKey":0.06,"optimizedKey":0.055},{"ean":"859182400601576077","name":"Lica Výtah, chodby","owner":"MPP Alfa, a.s.","currentKey":0.01,"optimizedKey":0.005},{"ean":"859182400601576084","name":"Lica 2 NP","owner":"MPP Alfa, a.s.","currentKey":0.06,"optimizedKey":0.05},{"ean":"859182400601576091","name":"Lica 3 NP","owner":"MPP Alfa, a.s.","currentKey":0.04,"optimizedKey":0.03},{"ean":"859182400601729169","name":"Boleslavská O2","owner":"MPP Alfa, a.s.","currentKey":0.09,"optimizedKey":0.135},{"ean":"859182400601794679","name":"Lica 4.NP klimatizace","owner":"MPP Alfa, a.s.","currentKey":0.1,"optimizedKey":0.07},{"ean":"859182400608727717","name":"Boleslavská společné prostory","owner":"MPP Alfa, a.s.","currentKey":0.02,"optimizedKey":0.01},{"ean":"859182400708354387","name":"TNM Print","owner":"TNM PRINT s.r.o.","currentKey":0.01,"optimizedKey":0.005},{"ean":"859182400609281935","name":"Palackeho obchod","owner":"MPP Alfa, a.s.","currentKey":0.02,"optimizedKey":0.125},{"ean":"859182400610386308","name":"Řadovka PDY","owner":"MPP Alfa, a.s.","currentKey":0.02,"optimizedKey":0.02}]}],"perConsumer":[{"ean":"859182400601576053","name":"Lica 1.PP+1.NP","owner":"MPP Alfa, a.s.","currentReceived":332.50999999999607,"optimizedReceived":407.23999999999756},{"ean":"859182400601576077","name":"Lica Výtah, chodby","owner":"MPP Alfa, a.s.","currentReceived":24.84999999999995,"optimizedReceived":21.139999999999986},{"ean":"859182400601576084","name":"Lica 2 NP","owner":"MPP Alfa, a.s.","currentReceived":368.81999999999556,"optimizedReceived":333.18000000000063},{"ean":"859182400601576091","name":"Lica 3 NP","owner":"MPP Alfa, a.s.","currentReceived":169.7599999999998,"optimizedReceived":132.51999999999992},{"ean":"859182400601729169","name":"Boleslavská O2","owner":"MPP Alfa, a.s.","currentReceived":579.7799999999872,"optimizedReceived":502.31999999999863},{"ean":"859182400601794679","name":"Lica 4.NP klimatizace","owner":"MPP Alfa, a.s.","currentReceived":279.1400000000002,"optimizedReceived":173.49000000000112},{"ean":"859182400608727717","name":"Boleslavská společné prostory","owner":"MPP Alfa, a.s.","currentReceived":41.70000000000015,"optimizedReceived":25.140000000000214},{"ean":"859182400601059136","name":"Záložna","owner":"MPP Alfa, a.s.","currentReceived":413.14999999999844,"optimizedReceived":248.31000000000088},{"ean":"859182400601613192","name":"Koněvova ubytovna","owner":"MPP Alfa, a.s.","currentReceived":328.9199999999966,"optimizedReceived":304.329999999999},{"ean":"859182400604363094","name":"Jižní 2233","owner":"Petr Báša","currentReceived":53.26999999999998,"optimizedReceived":53.5400000000001},{"ean":"859182400607640871","name":"Lica byt B","owner":"MPP Alfa, a.s.","currentReceived":54.40000000000007,"optimizedReceived":52.9},{"ean":"859182400708354387","name":"TNM Print","owner":"TNM PRINT s.r.o.","currentReceived":2519.3700000000395,"optimizedReceived":2861.340000000145},{"ean":"859182400609281935","name":"Palackeho obchod","owner":"MPP Alfa, a.s.","currentReceived":198.21999999999966,"optimizedReceived":337.6399999999991},{"ean":"859182400610386308","name":"Řadovka PDY","owner":"MPP Alfa, a.s.","currentReceived":45.350000000000115,"optimizedReceived":40.430000000000035},{"ean":"859182400611105595","name":"Topolová myčka/garáže","owner":"MPP Alfa, a.s.","currentReceived":24.1100000000002,"optimizedReceived":3.139999999999986},{"ean":"859182400611058037","name":"PNF č.p. 167","owner":"Polabský nadační fond","currentReceived":6.319999999999967,"optimizedReceived":3.4799999999999893},{"ean":"859182400601611853","name":"Diwang restaurace","owner":"MPP Alfa, a.s.","currentReceived":0,"optimizedReceived":0}]};
+
+let selectedYear = 'all';
+let selectedMonth = 'all'; // 'all' or '01','02',...'12'
+
+function fmt(n) {
+  const parts = n.toFixed(2).split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return parts.join(',');
+}
+function effClass(pct) { return pct >= 50 ? 'eff-high' : pct >= 20 ? 'eff-mid' : 'eff-low'; }
+
+// Derive unique years from months
+const years = [...new Set(months.map(m => m.split('-')[0]))].sort();
+const monthNames = ['', 'Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen',
+  'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
+function ownerClass(o) {
+  if (o.includes('MPP')) return 'owner-mpp';
+  if (o.includes('nadační') || o.includes('PNF') || o.includes('Polabský')) return 'owner-pnf';
+  if (o.includes('TNM')) return 'owner-tnm';
+  if (o.includes('Báša')) return 'owner-basa';
+  return 'owner-default';
+}
+function ownerTag(o) { return '<span class="owner-tag ' + ownerClass(o) + '">' + o + '</span>'; }
+function eanLabel(ean) {
+  if (consumers[ean]) return consumers[ean].name;
+  if (producers[ean]) return producers[ean].name;
+  return ean.slice(-6);
+}
+function eanOwner(ean) {
+  if (consumers[ean]) return consumers[ean].owner;
+  if (producers[ean]) return producers[ean].owner;
+  return 'Neznámý';
+}
+
+function getMonths() {
+  return months.filter(m => {
+    const [y, mo] = m.split('-');
+    if (selectedYear !== 'all' && y !== selectedYear) return false;
+    if (selectedMonth !== 'all' && mo !== selectedMonth) return false;
+    return true;
+  });
+}
+
+function isFiltered() {
+  return selectedYear !== 'all' || selectedMonth !== 'all';
+}
+
+function getVisibleMonthColumns() {
+  // Months shown as individual columns in tables (when not filtered to single month)
+  if (selectedYear !== 'all' && selectedMonth === 'all') {
+    return months.filter(m => m.startsWith(selectedYear));
+  }
+  if (selectedYear === 'all' && selectedMonth === 'all') {
+    return months;
+  }
+  return [];
+}
+
+function sumOverMonths(statsObj, ean, field) {
+  let total = 0;
+  for (const m of getMonths()) {
+    if (statsObj[ean] && statsObj[ean][m]) total += statsObj[ean][m][field];
+  }
+  return total;
+}
+
+function renderAll() {
+  renderSummary();
+  renderFilters();
+  renderProducers();
+  renderConsumers();
+  renderOwnerProd();
+  renderOwnerCons();
+  renderOwnerFlow();
+  renderDetailAlloc();
+  if (optData) renderOptimization();
+}
+
+function renderFilters() {
+  // Year filter
+  const yearEl = document.getElementById('year-filter');
+  let yHtml = '<span class="filter-label">Rok:</span>';
+  yHtml += '<button class="month-btn ' + (selectedYear === 'all' ? 'active' : '') + '" onclick="selectYear(\'all\')">Vše</button>';
+  for (const y of years) {
+    yHtml += '<button class="month-btn ' + (selectedYear === y ? 'active' : '') + '" onclick="selectYear(\'' + y + '\')">' + y + '</button>';
+  }
+  yearEl.innerHTML = yHtml;
+
+  // Month filter - show months relevant to selected year (or all unique months)
+  const monthEl = document.getElementById('month-filter');
+  const relevantMonthNums = new Set();
+  for (const m of months) {
+    const [y, mo] = m.split('-');
+    if (selectedYear === 'all' || y === selectedYear) relevantMonthNums.add(mo);
+  }
+  const sortedMonthNums = [...relevantMonthNums].sort();
+
+  let mHtml = '<span class="filter-label">Měsíc:</span>';
+  mHtml += '<button class="month-btn ' + (selectedMonth === 'all' ? 'active' : '') + '" onclick="selectMonthNum(\'all\')">Vše</button>';
+  for (const mo of sortedMonthNums) {
+    mHtml += '<button class="month-btn ' + (selectedMonth === mo ? 'active' : '') + '" onclick="selectMonthNum(\'' + mo + '\')">' + monthNames[parseInt(mo)] + '</button>';
+  }
+  monthEl.innerHTML = mHtml;
+}
+
+function selectYear(y) { selectedYear = y; selectedMonth = 'all'; renderAll(); }
+function selectMonthNum(mo) { selectedMonth = mo; renderAll(); }
+
+function renderSummary() {
+  const ms = getMonths();
+  let totalProd = 0, totalShared = 0, totalCons = 0, totalReceived = 0;
+  for (const m of ms) {
+    for (const ean of Object.keys(producerStats)) {
+      if (producerStats[ean][m]) { totalProd += producerStats[ean][m].production; totalShared += producerStats[ean][m].shared; }
+    }
+    for (const ean of Object.keys(consumerStats)) {
+      if (consumerStats[ean][m]) { totalCons += consumerStats[ean][m].consumption; totalReceived += consumerStats[ean][m].received; }
+    }
+  }
+  const prodEff = totalProd > 0 ? (totalShared / totalProd * 100) : 0;
+  const consEff = totalCons > 0 ? (totalReceived / totalCons * 100) : 0;
+
+  document.getElementById('summary-cards').innerHTML =
+    '<div class="card-group"><div class="group-title">Výroba</div><div class="metrics">' +
+      '<div class="metric blue"><div class="label">Celková výroba</div><div class="value">' + fmt(totalProd) + ' <span class="unit">kWh</span></div></div>' +
+      '<div class="metric green"><div class="label">Nasdíleno</div><div class="value">' + fmt(totalShared) + ' <span class="unit">kWh</span></div></div>' +
+      '<div class="metric orange"><div class="label">Efektivita</div><div class="value">' + fmt(prodEff) + ' <span class="unit">%</span></div></div>' +
+    '</div></div>' +
+    '<div class="card-group"><div class="group-title">Spotřeba</div><div class="metrics">' +
+      '<div class="metric purple"><div class="label">Celková spotřeba</div><div class="value">' + fmt(totalCons) + ' <span class="unit">kWh</span></div></div>' +
+      '<div class="metric green"><div class="label">Přijato sdílením</div><div class="value">' + fmt(totalReceived) + ' <span class="unit">kWh</span></div></div>' +
+      '<div class="metric orange"><div class="label">Pokrytí</div><div class="value">' + fmt(consEff) + ' <span class="unit">%</span></div></div>' +
+    '</div></div>';
+}
+
+function renderProducers() {
+  const ms = getMonths();
+  const eans = Object.keys(producerStats).sort((a, b) => eanLabel(a).localeCompare(eanLabel(b)));
+  let html = '<table><thead><tr><th>Výrobna</th><th>Vlastník</th>';
+  const visCols = getVisibleMonthColumns(); for (const m of visCols) html += '<th class="num">' + monthLabels[m] + '</th>';
+  html += '<th class="num">Výroba (kWh)</th><th class="num">Nasdíleno (kWh)</th><th class="num">Přebytek (kWh)</th><th class="num">Efektivita</th></tr></thead><tbody>';
+
+  let totProd = 0, totShared = 0, totSurplus = 0;
+  for (const ean of eans) {
+    const prod = sumOverMonths(producerStats, ean, 'production');
+    const shared = sumOverMonths(producerStats, ean, 'shared');
+    const surplus = sumOverMonths(producerStats, ean, 'surplus');
+    const eff = prod > 0 ? shared / prod * 100 : 0;
+    totProd += prod; totShared += shared; totSurplus += surplus;
+
+    html += '<tr><td>' + eanLabel(ean) + '</td><td>' + ownerTag(eanOwner(ean)) + '</td>';
+    for (const m of visCols) {
+      const s = producerStats[ean][m] ? producerStats[ean][m].shared : 0;
+      html += '<td class="num">' + fmt(s) + '</td>';
+    }
+    html += '<td class="num">' + fmt(prod) + '</td><td class="num">' + fmt(shared) + '</td><td class="num">' + fmt(surplus) + '</td>';
+    html += '<td class="num eff ' + effClass(eff) + '">' + fmt(eff) + ' %</td></tr>';
+  }
+
+  const totEff = totProd > 0 ? totShared / totProd * 100 : 0;
+  html += '<tr class="total-row"><td><strong>Celkem</strong></td><td></td>';
+  for (const m of visCols) {
+    let mShared = 0;
+    for (const ean of eans) { if (producerStats[ean][m]) mShared += producerStats[ean][m].shared; }
+    html += '<td class="num">' + fmt(mShared) + '</td>';
+  }
+  html += '<td class="num">' + fmt(totProd) + '</td><td class="num">' + fmt(totShared) + '</td><td class="num">' + fmt(totSurplus) + '</td>';
+  html += '<td class="num eff ' + effClass(totEff) + '">' + fmt(totEff) + ' %</td></tr>';
+  html += '</tbody></table>';
+  document.getElementById('producers-table').innerHTML = html;
+}
+
+function renderConsumers() {
+  const ms = getMonths();
+  const eans = Object.keys(consumerStats).sort((a, b) => eanOwner(a).localeCompare(eanOwner(b)) || eanLabel(a).localeCompare(eanLabel(b)));
+  let html = '<table><thead><tr><th>Odběrné místo</th><th>Vlastník</th>';
+  const visCols = getVisibleMonthColumns(); for (const m of visCols) html += '<th class="num">' + monthLabels[m] + '</th>';
+  html += '<th class="num">Spotřeba (kWh)</th><th class="num">Nasdíleno (kWh)</th><th class="num">Ze sítě (kWh)</th><th class="num">Pokrytí</th></tr></thead><tbody>';
+
+  let totCons = 0, totReceived = 0, totGrid = 0;
+  for (const ean of eans) {
+    const cons = sumOverMonths(consumerStats, ean, 'consumption');
+    const received = sumOverMonths(consumerStats, ean, 'received');
+    const grid = sumOverMonths(consumerStats, ean, 'fromGrid');
+    const eff = cons > 0 ? received / cons * 100 : 0;
+    totCons += cons; totReceived += received; totGrid += grid;
+
+    html += '<tr><td>' + eanLabel(ean) + '</td><td>' + ownerTag(eanOwner(ean)) + '</td>';
+    for (const m of visCols) {
+      const r = consumerStats[ean][m] ? consumerStats[ean][m].received : 0;
+      html += '<td class="num">' + fmt(r) + '</td>';
+    }
+    html += '<td class="num">' + fmt(cons) + '</td><td class="num">' + fmt(received) + '</td><td class="num">' + fmt(grid) + '</td>';
+    html += '<td class="num eff ' + effClass(eff) + '">' + fmt(eff) + ' %</td></tr>';
+  }
+
+  const totEff = totCons > 0 ? totReceived / totCons * 100 : 0;
+  html += '<tr class="total-row"><td><strong>Celkem</strong></td><td></td>';
+  for (const m of visCols) {
+    let mRcv = 0;
+    for (const ean of eans) { if (consumerStats[ean][m]) mRcv += consumerStats[ean][m].received; }
+    html += '<td class="num">' + fmt(mRcv) + '</td>';
+  }
+  html += '<td class="num">' + fmt(totCons) + '</td><td class="num">' + fmt(totReceived) + '</td><td class="num">' + fmt(totGrid) + '</td>';
+  html += '<td class="num eff ' + effClass(totEff) + '">' + fmt(totEff) + ' %</td></tr>';
+  html += '</tbody></table>';
+  document.getElementById('consumers-table').innerHTML = html;
+}
+
+function renderOwnerProd() {
+  const visCols = getVisibleMonthColumns();
+  const ms = getMonths();
+  let html = '<table><thead><tr><th>Vlastník</th>';
+  for (const m of visCols) html += '<th class="num">' + monthLabels[m] + ' (kWh)</th>';
+  html += '<th class="num">Celkem výroba</th><th class="num">Celkem nasdíleno</th><th class="num">Efektivita</th></tr></thead><tbody>';
+
+  for (const owner of owners) {
+    let hasData = false;
+    for (const m of ms) { if (ownerProduction[owner][m] && ownerProduction[owner][m].production > 0) hasData = true; }
+    if (!hasData) continue;
+
+    let totalProd = 0, totalShared = 0;
+    html += '<tr><td>' + ownerTag(owner) + '</td>';
+    for (const m of visCols) {
+      const d = ownerProduction[owner][m] || {shared:0,production:0};
+      html += '<td class="num">' + fmt(d.shared) + ' / ' + fmt(d.production) + '</td>';
+    }
+    for (const m of ms) {
+      const d = ownerProduction[owner][m] || {production:0,shared:0};
+      totalProd += d.production; totalShared += d.shared;
+    }
+    const eff = totalProd > 0 ? totalShared / totalProd * 100 : 0;
+    html += '<td class="num">' + fmt(totalProd) + '</td><td class="num">' + fmt(totalShared) + '</td>';
+    html += '<td class="num eff ' + effClass(eff) + '">' + fmt(eff) + ' %</td></tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('tab-owner-prod').innerHTML = html;
+}
+
+function renderOwnerCons() {
+  const visCols = getVisibleMonthColumns();
+  const ms = getMonths();
+  let html = '<table><thead><tr><th>Vlastník</th>';
+  for (const m of visCols) html += '<th class="num">' + monthLabels[m] + ' (kWh)</th>';
+  html += '<th class="num">Celkem spotřeba</th><th class="num">Celkem přijato</th><th class="num">Pokrytí</th></tr></thead><tbody>';
+
+  for (const owner of owners) {
+    let hasData = false;
+    for (const m of ms) { if (ownerConsumption[owner][m] && ownerConsumption[owner][m].consumption > 0) hasData = true; }
+    if (!hasData) continue;
+
+    let totalCons = 0, totalRcv = 0;
+    html += '<tr><td>' + ownerTag(owner) + '</td>';
+    for (const m of visCols) {
+      const d = ownerConsumption[owner][m] || {received:0,consumption:0};
+      html += '<td class="num">' + fmt(d.received) + ' / ' + fmt(d.consumption) + '</td>';
+    }
+    for (const m of ms) {
+      const d = ownerConsumption[owner][m] || {consumption:0,received:0};
+      totalCons += d.consumption; totalRcv += d.received;
+    }
+    const eff = totalCons > 0 ? totalRcv / totalCons * 100 : 0;
+    html += '<td class="num">' + fmt(totalCons) + '</td><td class="num">' + fmt(totalRcv) + '</td>';
+    html += '<td class="num eff ' + effClass(eff) + '">' + fmt(eff) + ' %</td></tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('tab-owner-cons').innerHTML = html;
+}
+
+function renderOwnerFlow() {
+  const ms = getMonths();
+  const srcOwners = Object.keys(ownerAllocMatrix).sort();
+  const allDstOwners = new Set();
+  for (const src of srcOwners) { for (const dst of Object.keys(ownerAllocMatrix[src])) allDstOwners.add(dst); }
+  const dstOwners = [...allDstOwners].sort();
+
+  let html = '<table class="flow-matrix"><thead><tr><th>Zdroj \\ Příjemce</th>';
+  for (const dst of dstOwners) html += '<th class="num">' + dst + '</th>';
+  html += '<th class="num"><strong>Celkem odesláno</strong></th></tr></thead><tbody>';
+
+  for (const src of srcOwners) {
+    html += '<tr><td><strong>' + src + '</strong></td>';
+    let rowTotal = 0;
+    for (const dst of dstOwners) {
+      let val = 0;
+      for (const m of ms) {
+        if (ownerAllocMatrix[src][dst] && ownerAllocMatrix[src][dst][m]) val += ownerAllocMatrix[src][dst][m];
+      }
+      rowTotal += val;
+      html += '<td class="num' + (val > 0 ? ' highlight' : '') + '">' + (val > 0 ? fmt(val) : '-') + '</td>';
+    }
+    html += '<td class="num total-row">' + fmt(rowTotal) + '</td></tr>';
+  }
+
+  // Total received row
+  html += '<tr class="total-row"><td><strong>Celkem přijato</strong></td>';
+  for (const dst of dstOwners) {
+    let colTotal = 0;
+    for (const src of srcOwners) {
+      for (const m of ms) {
+        if (ownerAllocMatrix[src][dst] && ownerAllocMatrix[src][dst][m]) colTotal += ownerAllocMatrix[src][dst][m];
+      }
+    }
+    html += '<td class="num">' + fmt(colTotal) + '</td>';
+  }
+  html += '<td class="num"></td></tr>';
+
+  html += '</tbody></table>';
+  document.getElementById('owner-flow-table').innerHTML = html;
+}
+
+function renderDetailAlloc() {
+  const ms = getMonths();
+  const visCols = getVisibleMonthColumns();
+  const srcEans = Object.keys(detailAlloc).sort((a,b) => eanLabel(a).localeCompare(eanLabel(b)));
+  let html = '<table><thead><tr><th>Zdroj</th><th>Vlastník zdroje</th><th>Odběrné místo</th><th>Vlastník odběru</th>';
+  for (const m of visCols) html += '<th class="num">' + monthLabels[m] + '</th>';
+  html += '<th class="num">Celkem (kWh)</th></tr></thead><tbody>';
+
+  for (const srcEan of srcEans) {
+    const dstEans = Object.keys(detailAlloc[srcEan]).sort((a,b) => eanLabel(a).localeCompare(eanLabel(b)));
+    for (const dstEan of dstEans) {
+      let total = 0;
+      for (const m of ms) { total += detailAlloc[srcEan][dstEan][m] || 0; }
+      if (total === 0) continue;
+
+      html += '<tr><td>' + eanLabel(srcEan) + '</td><td>' + ownerTag(eanOwner(srcEan)) + '</td>';
+      html += '<td>' + eanLabel(dstEan) + '</td><td>' + ownerTag(eanOwner(dstEan)) + '</td>';
+      for (const m of visCols) {
+        const v = detailAlloc[srcEan][dstEan][m] || 0;
+        html += '<td class="num">' + (v > 0 ? fmt(v) : '-') + '</td>';
+      }
+      html += '<td class="num"><strong>' + fmt(total) + '</strong></td></tr>';
+    }
+  }
+  html += '</tbody></table>';
+  document.getElementById('detail-alloc-table').innerHTML = html;
+}
+
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function renderOptimization() {
+  var sec = document.getElementById('optimization-section');
+  sec.style.display = '';
+  var s = optData.summary;
+  var cardsHtml =
+    '<div class="card-group"><div class="group-title">Současné nastavení</div><div class="metrics">' +
+      '<div class="metric blue"><div class="label">Nasdíleno</div><div class="value">' + fmt(s.currentShared) + ' <span class="unit">kWh</span></div></div>' +
+      '<div class="metric orange"><div class="label">Efektivita</div><div class="value">' + fmt(s.currentEfficiency) + ' <span class="unit">%</span></div></div>' +
+      '<div class="metric"><div class="label">Teor. maximum</div><div class="value">' + fmt(s.theoreticalMax) + ' <span class="unit">kWh</span></div></div>' +
+    '</div></div>' +
+    '<div class="card-group"><div class="group-title">Po optimalizaci</div><div class="metrics">' +
+      '<div class="metric green"><div class="label">Nasdíleno</div><div class="value">' + fmt(s.optimizedShared) + ' <span class="unit">kWh</span></div></div>' +
+      '<div class="metric green"><div class="label">Efektivita</div><div class="value">' + fmt(s.optimizedEfficiency) + ' <span class="unit">%</span></div></div>' +
+      '<div class="metric green"><div class="label">Zlepšení</div><div class="value">+' + fmt(s.improvement) + ' <span class="unit">kWh (+' + fmt(s.improvementPct) + ' p.b.)</span></div></div>' +
+    '</div></div>';
+  document.getElementById('optimization-cards').innerHTML = cardsHtml;
+
+  var tHtml = '';
+  for (var p = 0; p < optData.perProducer.length; p++) {
+    var prod = optData.perProducer[p];
+    var prodImpr = prod.optimizedShared - prod.currentShared;
+    tHtml += '<h3>' + prod.name + ' <small>(' + prod.owner + ')</small> — ';
+    tHtml += fmt(prod.currentShared) + ' &rarr; ' + fmt(prod.optimizedShared) + ' kWh';
+    tHtml += ' <span class="eff ' + (prodImpr > 0 ? 'eff-high' : 'eff-mid') + '">(+' + fmt(prodImpr) + ')</span></h3>';
+    tHtml += '<table><thead><tr><th>Odběrné místo</th><th>Vlastník</th><th class="num">Současný klíč (%)</th><th class="num">Navrhovaný klíč (%)</th><th class="num">Změna</th></tr></thead><tbody>';
+    for (var c = 0; c < prod.consumers.length; c++) {
+      var con = prod.consumers[c];
+      var curPct = con.currentKey * 100;
+      var optPct = con.optimizedKey * 100;
+      var diff = optPct - curPct;
+      var diffClass = diff > 0.01 ? 'eff-high' : diff < -0.01 ? 'eff-low' : '';
+      var diffStr = diff >= 0 ? '+' + fmt(diff) : fmt(diff);
+      tHtml += '<tr><td>' + con.name + '</td><td>' + ownerTag(con.owner) + '</td>';
+      tHtml += '<td class="num">' + fmt(curPct) + '</td>';
+      tHtml += '<td class="num">' + fmt(optPct) + '</td>';
+      tHtml += '<td class="num eff ' + diffClass + '">' + diffStr + '</td></tr>';
+    }
+    tHtml += '</tbody></table>';
+  }
+  document.getElementById('optimization-tables').innerHTML = tHtml;
+}
+
+// Initial render
+renderAll();
+</script>
+</body>
+</html>
