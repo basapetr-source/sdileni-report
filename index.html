@@ -49,7 +49,7 @@
   .tab-buttons { display: flex; gap: 4px; border-bottom: 2px solid #e2e8f0; }
   .tab-btn { padding: 8px 16px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #a0aec0; border-bottom: 2px solid transparent; margin-bottom: -2px; }
   .tab-btn.active { color: #3182ce; border-bottom-color: #3182ce; }
-  .tab-content { display: none; padding-top: 16px; }
+  .tab-content { display: none; padding-top: 16px; overflow-x: auto; }
   .tab-content.active { display: block; }
 
   .flow-matrix th.rotate { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); max-width: 40px; }
@@ -69,6 +69,16 @@
   }
 
   .table-scroll { overflow-x: auto; }
+  .table-scroll th:first-child, .table-scroll td:first-child,
+  .tab-content th:first-child, .tab-content td:first-child { position: sticky; left: 0; z-index: 1; background: white; }
+  .table-scroll th:first-child, .tab-content th:first-child { background: #f7fafc; }
+  .table-scroll tr:hover td:first-child, .tab-content tr:hover td:first-child { background: #f7fafc; }
+  th.mcol, td.mcol { color: #718096; font-size: 12px; white-space: nowrap; }
+  th.mcol { font-weight: 500; }
+  th.mcol-first, td.mcol-first { border-left: 2px solid #e2e8f0; }
+  .table-scroll td:first-child, .tab-content td:first-child, .owner-tag { white-space: nowrap; }
+  .mcol-sub { display: block; font-size: 10px; font-weight: 400; color: #a0aec0; }
+  .col-hint { font-size: 12px; color: #a0aec0; }
   .total-row td { font-weight: 700; background: #f7fafc !important; border-top: 2px solid #e2e8f0; }
 
   .chart-legend { display: flex; gap: 20px; margin-bottom: 12px; font-size: 13px; color: #4a5568; }
@@ -88,7 +98,7 @@
 
 <div class="header">
   <h1>Sdílení energie - Energetické společenství</h1>
-  <div class="subtitle">Vygenerováno: 11. 11. 2026 19:15:11 | Data: Únor 2026, Březen 2026, Duben 2026, Květen 2026, Červen 2026, Červenec 2026, Srpen 2026, Září 2026, Říjen 2026</div>
+  <div class="subtitle">Vygenerováno: 11. 11. 2026 19:48:54 | Data: Únor 2026, Březen 2026, Duben 2026, Květen 2026, Červen 2026, Červenec 2026, Srpen 2026, Září 2026, Říjen 2026</div>
 </div>
 
 <div class="container">
@@ -100,6 +110,7 @@
 <div class="filter-bar">
   <div class="filter-row" id="year-filter"></div>
   <div class="filter-row" id="month-filter"></div>
+  <div class="filter-row" id="cols-filter"></div>
 </div>
 
 <!-- Section: Přehled výroben -->
@@ -178,7 +189,9 @@ const dailyProd = {"2026-02-01":{"shared":5.72,"sold":1.45},"2026-02-02":{"share
 const weekhourProd = {"2026-02":[[{"shared":0.4,"sold":0.44},{"shared":0.33,"sold":0.37},{"shared":0.46,"sold":0.43},{"shared":0.74,"sold":0.51},{"shared":0.73,"sold":0.49},{"shared":0.53,"sold":0.39},{"shared":0.08,"sold":0.24},{"shared":0.06,"sold":0.19},{"shared":1.01,"sold":0.39},{"shared":2.15,"sold":0.59},{"shared":6.87,"sold":0.68},{"shared":35,"sold":1.34},{"shared":23.34,"sold":1},{"shared":38.77,"sold":1.54},{"shared":23.75,"sold":1.37},{"shared":3.39,"sold":0.72},{"shared":3.13,"sold":0.55},{"shared":2.65,"sold":0.44},{"shared":2.5,"sold":0.48},{"shared":1.51,"sold":0.42},{"shared":0.2,"sold":0.33},{"shared":0.39,"sold":0.38},{"shared":1.71,"sold":0.5},{"shared":0.2,"sold":0.21}],[{"shared":0.02,"sold":0.19},{"shared":0.51,"sold":0.39},{"shared":1.78,"sold":0.5},{"shared":0.02,"sold":0.24},{"shared":0.16,"sold":0.21},{"shared":0.92,"sold":0.43},{"shared":1.05,"sold":0.37},{"shared":0.48,"sold":0.23},{"shared":0.48,"sold":0.17},{"shared":3.12,"sold":0.44},{"shared":16.45,"sold":0.67},{"shared":23.38,"sold":0.8},{"shared":17.37,"sold":0.82},{"shared":34.19,"sold":1.25},{"shared":14.78,"sold":1.22},{"shared":8.19,"sold":0.68},{"shared":1.91,"sold":0.44},{"shared":1.38,"sold":0.41},{"shared":2.56,"sold":0.35},{"shared":2.39,"sold":0.33},{"shared":0.24,"sold":0.26},{"shared":0.79,"sold":0.27},{"shared":1.54,"sold":0.41},{"shared":1.28,"sold":0.31}],[{"shared":1.16,"sold":0.26},{"shared":0.46,"sold":0.29},{"shared":0.89,"sold":0.39},{"shared":0.43,"sold":0.33},{"shared":0.26,"sold":0.28},{"shared":0.79,"sold":0.41},{"shared":0.13,"sold":0.18},{"shared":0.1,"sold":0.12},{"shared":0.76,"sold":0.51},{"shared":1.9,"sold":0.57},{"shared":7.19,"sold":0.64},{"shared":27.58,"sold":1.16},{"shared":36.15,"sold":1.75},{"shared":45.16,"sold":3.1},{"shared":34.73,"sold":2.27},{"shared":14.77,"sold":0.86},{"shared":4.44,"sold":0.72},{"shared":1.82,"sold":0.5},{"shared":0.5,"sold":0.34},{"shared":1.35,"sold":0.49},{"shared":0.49,"sold":0.44},{"shared":0.34,"sold":0.37},{"shared":1.05,"sold":0.43},{"shared":1.05,"sold":0.43}],[{"shared":0.27,"sold":0.41},{"shared":0.62,"sold":0.55},{"shared":1.48,"sold":0.63},{"shared":1.64,"sold":0.5},{"shared":1.53,"sold":0.4},{"shared":2.05,"sold":0.51},{"shared":1.56,"sold":0.45},{"shared":0.33,"sold":0.29},{"shared":1.18,"sold":0.55},{"shared":4.15,"sold":0.64},{"shared":17.78,"sold":0.83},{"shared":45.69,"sold":2.52},{"shared":46.09,"sold":2.55},{"shared":57.07,"sold":5.8},{"shared":52.3,"sold":12.13},{"shared":29.18,"sold":1.31},{"shared":4.85,"sold":0.69},{"shared":4.23,"sold":0.67},{"shared":4.35,"sold":0.66},{"shared":1.84,"sold":0.5},{"shared":0.5,"sold":0.41},{"shared":1.68,"sold":0.44},{"shared":3.01,"sold":0.37},{"shared":2.93,"sold":0.47}],[{"shared":0.82,"sold":0.35},{"shared":0.15,"sold":0.43},{"shared":0.66,"sold":0.49},{"shared":1.73,"sold":0.54},{"shared":1.68,"sold":0.59},{"shared":0.34,"sold":0.47},{"shared":0.81,"sold":0.51},{"shared":1.15,"sold":0.37},{"shared":1.14,"sold":0.44},{"shared":2.21,"sold":0.71},{"shared":20.86,"sold":1.43},{"shared":63.14,"sold":2.97},{"shared":80.84,"sold":3.68},{"shared":73.03,"sold":11.24},{"shared":53.44,"sold":40.65},{"shared":26.54,"sold":8.41},{"shared":4.53,"sold":0.82},{"shared":0.7,"sold":0.61},{"shared":0.6,"sold":0.57},{"shared":1.26,"sold":0.61},{"shared":0.24,"sold":0.44},{"shared":0.33,"sold":0.55},{"shared":1.17,"sold":0.58},{"shared":0.7,"sold":0.54}],[{"shared":0.27,"sold":0.45},{"shared":0.59,"sold":0.57},{"shared":0.77,"sold":0.62},{"shared":0.5,"sold":0.63},{"shared":0.42,"sold":0.53},{"shared":0.9,"sold":0.65},{"shared":0.48,"sold":0.59},{"shared":0.25,"sold":0.47},{"shared":12.24,"sold":2.73},{"shared":20.04,"sold":15.82},{"shared":28.08,"sold":63.79},{"shared":24.28,"sold":107.94},{"shared":36.46,"sold":126.3},{"shared":33.7,"sold":99.53},{"shared":30.63,"sold":67.46},{"shared":18.82,"sold":31.12},{"shared":6.04,"sold":1.9},{"shared":1.5,"sold":0.7},{"shared":1.54,"sold":0.74},{"shared":1.04,"sold":0.74},{"shared":0.57,"sold":0.62},{"shared":0.46,"sold":0.56},{"shared":1.68,"sold":0.79},{"shared":1.61,"sold":0.78}],[{"shared":0.54,"sold":0.43},{"shared":0.35,"sold":0.39},{"shared":0.64,"sold":0.49},{"shared":0.94,"sold":0.58},{"shared":0.53,"sold":0.49},{"shared":0.89,"sold":0.47},{"shared":0.02,"sold":0.21},{"shared":0.12,"sold":0.18},{"shared":1.14,"sold":0.47},{"shared":2.15,"sold":0.63},{"shared":0.86,"sold":0.55},{"shared":4.55,"sold":0.86},{"shared":12.55,"sold":1.71},{"shared":5.43,"sold":0.73},{"shared":3.49,"sold":0.66},{"shared":2.39,"sold":0.65},{"shared":2.52,"sold":0.59},{"shared":0.7,"sold":0.48},{"shared":0.77,"sold":0.44},{"shared":0.86,"sold":0.43},{"shared":0.29,"sold":0.3},{"shared":0.43,"sold":0.36},{"shared":0.88,"sold":0.52},{"shared":1.25,"sold":0.55}]],"2026-03":[[{"shared":0.75,"sold":0.87},{"shared":0.37,"sold":0.73},{"shared":0.4,"sold":0.68},{"shared":0.24,"sold":0.7},{"shared":1.03,"sold":0.87},{"shared":0.53,"sold":0.78},{"shared":0.58,"sold":0.73},{"shared":0.37,"sold":2.18},{"shared":1.97,"sold":3.75},{"shared":55.04,"sold":9.46},{"shared":114.68,"sold":18.16},{"shared":129.99,"sold":14.19},{"shared":115.31,"sold":20.26},{"shared":112.7,"sold":21.49},{"shared":102.67,"sold":18.17},{"shared":80.7,"sold":17.08},{"shared":26.29,"sold":6.88},{"shared":6.49,"sold":10.01},{"shared":0.16,"sold":5.04},{"shared":0.05,"sold":0.61},{"shared":0.55,"sold":0.58},{"shared":0.19,"sold":0.56},{"shared":0.15,"sold":0.54},{"shared":0.99,"sold":0.57}],[{"shared":0.16,"sold":0.53},{"shared":0.45,"sold":0.61},{"shared":1.48,"sold":0.6},{"shared":0.36,"sold":0.56},{"shared":0.15,"sold":0.5},{"shared":0.89,"sold":0.75},{"shared":0.62,"sold":0.77},{"shared":0.38,"sold":1.76},{"shared":0.8,"sold":5.42},{"shared":58.13,"sold":3.02},{"shared":96.63,"sold":16.92},{"shared":134.87,"sold":18.72},{"shared":120.18,"sold":14.22},{"shared":127.53,"sold":12.4},{"shared":123.76,"sold":28.65},{"shared":104.49,"sold":23.31},{"shared":33.45,"sold":18.91},{"shared":1.05,"sold":8.23},{"shared":0.05,"sold":2.69},{"shared":1.08,"sold":0.83},{"shared":0.21,"sold":0.5},{"shared":0.82,"sold":0.47},{"shared":0.99,"sold":0.6},{"shared":1.35,"sold":0.67}],[{"shared":0.1,"sold":0.42},{"shared":0.04,"sold":0.39},{"shared":1.02,"sold":0.56},{"shared":0.46,"sold":0.61},{"shared":0.31,"sold":0.57},{"shared":0.28,"sold":0.53},{"shared":0.47,"sold":0.58},{"shared":1.51,"sold":0.71},{"shared":1.87,"sold":0.58},{"shared":49.55,"sold":1.15},{"shared":76.59,"sold":1.58},{"shared":96.63,"sold":3.06},{"shared":107.97,"sold":3.49},{"shared":124.85,"sold":3.95},{"shared":98.97,"sold":2.69},{"shared":68.09,"sold":1.78},{"shared":15.29,"sold":1.01},{"shared":3.04,"sold":0.76},{"shared":0.44,"sold":0.54},{"shared":0.12,"sold":0.38},{"shared":0.88,"sold":0.51},{"shared":0.12,"sold":0.38},{"shared":0.02,"sold":0.38},{"shared":1.54,"sold":0.59}],[{"shared":0.37,"sold":0.52},{"shared":0.09,"sold":0.45},{"shared":0.27,"sold":0.47},{"shared":0.87,"sold":0.69},{"shared":0.56,"sold":0.55},{"shared":0.28,"sold":0.51},{"shared":0.56,"sold":2.21},{"shared":0.69,"sold":7.46},{"shared":3.93,"sold":16.41},{"shared":57.55,"sold":19.1},{"shared":68.05,"sold":21.24},{"shared":93.56,"sold":24.42},{"shared":125.57,"sold":21.84},{"shared":134.66,"sold":21.21},{"shared":113.29,"sold":18.92},{"shared":87.96,"sold":15.72},{"shared":22.24,"sold":7.89},{"shared":3.95,"sold":4.6},{"shared":0.55,"sold":0.72},{"shared":0.03,"sold":0.48},{"shared":1.5,"sold":0.58},{"shared":0.02,"sold":0.42},{"shared":0.11,"sold":0.48},{"shared":1.92,"sold":0.69}],[{"shared":1.23,"sold":0.52},{"shared":0.12,"sold":0.59},{"shared":0.34,"sold":0.58},{"shared":1.39,"sold":0.79},{"shared":0.7,"sold":0.77},{"shared":0.22,"sold":0.69},{"shared":0.61,"sold":4.74},{"shared":0.6,"sold":14.01},{"shared":5.6,"sold":26.81},{"shared":74.3,"sold":31.8},{"shared":146.09,"sold":45.43},{"shared":177.09,"sold":37.09},{"shared":171,"sold":47.84},{"shared":160.13,"sold":44.72},{"shared":134.81,"sold":68.21},{"shared":98.42,"sold":51.36},{"shared":22.56,"sold":16.76},{"shared":3.64,"sold":4.49},{"shared":2.99,"sold":0.89},{"shared":0.37,"sold":0.55},{"shared":1,"sold":0.55},{"shared":0.04,"sold":0.45},{"shared":0.03,"sold":0.49},{"shared":1.24,"sold":0.67}],[{"shared":0.43,"sold":0.59},{"shared":0.02,"sold":0.48},{"shared":0.21,"sold":0.54},{"shared":0.54,"sold":0.61},{"shared":0.92,"sold":0.54},{"shared":0.06,"sold":0.5},{"shared":0.45,"sold":3.52},{"shared":0.62,"sold":11.32},{"shared":28.33,"sold":27.23},{"shared":46.82,"sold":51.35},{"shared":82.91,"sold":184.19},{"shared":88.3,"sold":317.53},{"shared":84.72,"sold":352.02},{"shared":87.43,"sold":265.63},{"shared":72.5,"sold":219.63},{"shared":58.36,"sold":114.18},{"shared":27.01,"sold":14.76},{"shared":3.76,"sold":1.99},{"shared":3.69,"sold":0.85},{"shared":1.26,"sold":0.68},{"shared":0.36,"sold":0.6},{"shared":0.05,"sold":0.54},{"shared":0.23,"sold":0.63},{"shared":0.64,"sold":0.62}],[{"shared":0.14,"sold":0.67},{"shared":0.09,"sold":0.66},{"shared":0.32,"sold":0.64},{"shared":0.83,"sold":0.86},{"shared":0.23,"sold":0.69},{"shared":0.27,"sold":0.75},{"shared":1.37,"sold":0.98},{"shared":4.54,"sold":2.24},{"shared":38.23,"sold":41.61},{"shared":31.34,"sold":110.42},{"shared":46.9,"sold":144.13},{"shared":62.57,"sold":211.37},{"shared":73.54,"sold":250.59},{"shared":59.5,"sold":178.81},{"shared":62.59,"sold":161.14},{"shared":58.39,"sold":61.79},{"shared":28.43,"sold":16.5},{"shared":2.48,"sold":6.46},{"shared":1.08,"sold":2.62},{"shared":1.87,"sold":0.89},{"shared":2.66,"sold":0.78},{"shared":0.77,"sold":0.59},{"shared":0.39,"sold":0.59},{"shared":0.47,"sold":0.71}]],"2026-04":[[{"shared":0.22,"sold":0.54},{"shared":0.68,"sold":0.66},{"shared":0.17,"sold":0.61},{"shared":0.23,"sold":0.59},{"shared":0.93,"sold":0.68},{"shared":0.43,"sold":0.66},{"shared":6.28,"sold":1.02},{"shared":37.4,"sold":1.53},{"shared":110.66,"sold":17.58},{"shared":191.44,"sold":36.58},{"shared":188.58,"sold":138.07},{"shared":190.07,"sold":151.68},{"shared":174.42,"sold":188.61},{"shared":214.85,"sold":189.43},{"shared":219.72,"sold":178.51},{"shared":192.48,"sold":177.17},{"shared":163.71,"sold":130.44},{"shared":99.22,"sold":45.05},{"shared":47.52,"sold":2.6},{"shared":9.33,"sold":1.01},{"shared":1.86,"sold":0.68},{"shared":2.36,"sold":0.65},{"shared":1.6,"sold":0.69},{"shared":0.45,"sold":0.57}],[{"shared":0.15,"sold":0.5},{"shared":0.3,"sold":0.66},{"shared":0.25,"sold":0.6},{"shared":0.15,"sold":0.55},{"shared":0.3,"sold":0.52},{"shared":0.59,"sold":0.62},{"shared":5.78,"sold":0.89},{"shared":33.63,"sold":1.17},{"shared":107.37,"sold":2.49},{"shared":241.98,"sold":10.14},{"shared":259.78,"sold":69.04},{"shared":295.01,"sold":22.1},{"shared":282.87,"sold":45.17},{"shared":284.08,"sold":33.73},{"shared":227.49,"sold":72.84},{"shared":236.31,"sold":21.3},{"shared":213.95,"sold":14.43},{"shared":159.15,"sold":8.31},{"shared":38.28,"sold":1.67},{"shared":7.15,"sold":1.02},{"shared":1.6,"sold":0.68},{"shared":0.6,"sold":0.61},{"shared":1.37,"sold":0.55},{"shared":0.53,"sold":0.5}],[{"shared":0.44,"sold":0.73},{"shared":0.24,"sold":0.79},{"shared":0.56,"sold":0.76},{"shared":0.37,"sold":0.68},{"shared":0.23,"sold":0.7},{"shared":0.33,"sold":0.85},{"shared":4.94,"sold":1.14},{"shared":34.49,"sold":1.47},{"shared":107.02,"sold":2.65},{"shared":217.31,"sold":9.52},{"shared":224.19,"sold":56.09},{"shared":307.76,"sold":20.66},{"shared":356.03,"sold":24.12},{"shared":373.44,"sold":39.39},{"shared":334.32,"sold":83.52},{"shared":302.56,"sold":95.87},{"shared":235.75,"sold":73.02},{"shared":178.44,"sold":18.87},{"shared":56.93,"sold":2.22},{"shared":10,"sold":1.35},{"shared":3.05,"sold":0.86},{"shared":2.83,"sold":0.84},{"shared":2.49,"sold":0.71},{"shared":1.19,"sold":0.61}],[{"shared":0.52,"sold":0.68},{"shared":1.83,"sold":0.77},{"shared":0.23,"sold":0.64},{"shared":0.72,"sold":0.72},{"shared":0.86,"sold":0.82},{"shared":0.5,"sold":0.76},{"shared":6.92,"sold":1.03},{"shared":38.29,"sold":1.5},{"shared":109.67,"sold":2.67},{"shared":267.11,"sold":11.57},{"shared":278.11,"sold":79.58},{"shared":386.43,"sold":29.29},{"shared":326.57,"sold":75.76},{"shared":324.34,"sold":80.13},{"shared":297.28,"sold":106.72},{"shared":261.39,"sold":84.98},{"shared":262.15,"sold":41.9},{"shared":195.63,"sold":13.49},{"shared":52.2,"sold":5.16},{"shared":8.94,"sold":1.31},{"shared":2.44,"sold":0.9},{"shared":1.19,"sold":0.81},{"shared":2.13,"sold":1},{"shared":1.97,"sold":0.84}],[{"shared":1.93,"sold":0.68},{"shared":0.68,"sold":0.64},{"shared":0.67,"sold":0.66},{"shared":0.93,"sold":0.73},{"shared":1.13,"sold":0.67},{"shared":0.07,"sold":0.54},{"shared":5.07,"sold":0.87},{"shared":33.12,"sold":1.35},{"shared":89.47,"sold":2.47},{"shared":160.69,"sold":9.69},{"shared":134.07,"sold":87.48},{"shared":192.06,"sold":131.48},{"shared":171.47,"sold":152.31},{"shared":135.5,"sold":283.98},{"shared":150.39,"sold":251.94},{"shared":179.75,"sold":144.55},{"shared":143.11,"sold":118.9},{"shared":96.6,"sold":54.26},{"shared":33.07,"sold":2.64},{"shared":6.55,"sold":0.93},{"shared":2.47,"sold":0.68},{"shared":4.3,"sold":0.75},{"shared":1.32,"sold":0.63},{"shared":0.44,"sold":0.61}],[{"shared":0.77,"sold":0.62},{"shared":0.82,"sold":0.65},{"shared":0.23,"sold":0.54},{"shared":0.45,"sold":0.54},{"shared":0.95,"sold":0.66},{"shared":1.48,"sold":0.69},{"shared":4.54,"sold":0.83},{"shared":28.78,"sold":1.12},{"shared":92.67,"sold":21.5},{"shared":139.01,"sold":106.16},{"shared":96,"sold":226.47},{"shared":84.69,"sold":395.14},{"shared":72.44,"sold":503.28},{"shared":69.83,"sold":477.15},{"shared":63.85,"sold":461.76},{"shared":64.4,"sold":441.29},{"shared":62.16,"sold":398.79},{"shared":61.38,"sold":197.03},{"shared":45.99,"sold":27.65},{"shared":5.52,"sold":1.11},{"shared":2.76,"sold":0.77},{"shared":2.06,"sold":0.79},{"shared":1.41,"sold":0.76},{"shared":0.45,"sold":0.74}],[{"shared":0.82,"sold":0.71},{"shared":1.12,"sold":0.71},{"shared":0.32,"sold":0.67},{"shared":0.4,"sold":0.77},{"shared":0.61,"sold":0.71},{"shared":1.61,"sold":0.76},{"shared":5.93,"sold":1.06},{"shared":28.18,"sold":4.08},{"shared":60.15,"sold":101.81},{"shared":64.96,"sold":260.54},{"shared":69.85,"sold":349.37},{"shared":73.16,"sold":366.51},{"shared":69.13,"sold":415.29},{"shared":59.75,"sold":447.5},{"shared":59.47,"sold":389.88},{"shared":60.22,"sold":347.09},{"shared":64.41,"sold":299.42},{"shared":61.77,"sold":137.54},{"shared":36.66,"sold":35.2},{"shared":5.84,"sold":1.02},{"shared":2.78,"sold":0.65},{"shared":1.77,"sold":0.74},{"shared":0.46,"sold":0.65},{"shared":0.51,"sold":0.57}]],"2026-05":[[{"shared":1.11,"sold":0.69},{"shared":0.87,"sold":0.72},{"shared":0.24,"sold":0.74},{"shared":0.39,"sold":0.7},{"shared":1.07,"sold":0.71},{"shared":3.88,"sold":1.03},{"shared":20.46,"sold":1.37},{"shared":71.73,"sold":1.99},{"shared":158.14,"sold":7.63},{"shared":196.06,"sold":9.46},{"shared":246.6,"sold":75.28},{"shared":281.09,"sold":28.68},{"shared":284.75,"sold":49.63},{"shared":256.88,"sold":88.63},{"shared":269.96,"sold":81.29},{"shared":221.78,"sold":73.52},{"shared":221.38,"sold":46},{"shared":170.74,"sold":13.19},{"shared":70.34,"sold":2.73},{"shared":22.66,"sold":1.29},{"shared":5.28,"sold":0.94},{"shared":2.72,"sold":0.71},{"shared":2.06,"sold":0.63},{"shared":2.34,"sold":0.62}],[{"shared":1.17,"sold":0.57},{"shared":0.41,"sold":0.61},{"shared":0.22,"sold":0.52},{"shared":0.13,"sold":0.51},{"shared":0.44,"sold":0.47},{"shared":2.3,"sold":0.83},{"shared":12.97,"sold":0.97},{"shared":57.86,"sold":1.39},{"shared":206.06,"sold":9.22},{"shared":279.47,"sold":15.21},{"shared":235.38,"sold":102.96},{"shared":300.85,"sold":24.68},{"shared":302.42,"sold":27.69},{"shared":252.05,"sold":74.81},{"shared":264.95,"sold":24.61},{"shared":264.11,"sold":31.06},{"shared":243.09,"sold":15.7},{"shared":161.17,"sold":7.61},{"shared":72.74,"sold":5.74},{"shared":21.89,"sold":1.26},{"shared":4.35,"sold":0.81},{"shared":3.33,"sold":0.59},{"shared":2.56,"sold":0.56},{"shared":1.23,"sold":0.49}],[{"shared":0.41,"sold":0.47},{"shared":0.41,"sold":0.57},{"shared":0.25,"sold":0.54},{"shared":0.2,"sold":0.5},{"shared":0.23,"sold":0.48},{"shared":2.86,"sold":0.81},{"shared":19.57,"sold":1.02},{"shared":77.45,"sold":1.72},{"shared":202.96,"sold":8.32},{"shared":259.79,"sold":12.97},{"shared":221.21,"sold":43.87},{"shared":244.44,"sold":54.39},{"shared":282.18,"sold":27.31},{"shared":243.52,"sold":37.87},{"shared":266.91,"sold":31.53},{"shared":218.22,"sold":16.33},{"shared":176.63,"sold":11.13},{"shared":111.85,"sold":5.91},{"shared":70.33,"sold":3.66},{"shared":16.82,"sold":1.14},{"shared":4.22,"sold":0.85},{"shared":1.52,"sold":0.51},{"shared":0.2,"sold":0.47},{"shared":1.44,"sold":0.54}],[{"shared":0.1,"sold":0.44},{"shared":0.11,"sold":0.4},{"shared":0.09,"sold":0.47},{"shared":0.3,"sold":0.53},{"shared":0.23,"sold":0.51},{"shared":2.98,"sold":0.78},{"shared":22.11,"sold":1.03},{"shared":63.84,"sold":1.93},{"shared":151.27,"sold":7.79},{"shared":220.16,"sold":11.37},{"shared":243.76,"sold":34.97},{"shared":271.93,"sold":40.48},{"shared":284.67,"sold":25.49},{"shared":268.86,"sold":56.58},{"shared":258.9,"sold":45.78},{"shared":260.4,"sold":20},{"shared":236.34,"sold":38.2},{"shared":152.98,"sold":7.99},{"shared":80.7,"sold":3.11},{"shared":20.98,"sold":1.22},{"shared":4.15,"sold":0.89},{"shared":1.14,"sold":0.57},{"shared":1.42,"sold":0.48},{"shared":1.17,"sold":0.51}],[{"shared":0.68,"sold":0.61},{"shared":0.55,"sold":0.73},{"shared":1.29,"sold":0.82},{"shared":0.82,"sold":0.7},{"shared":0.55,"sold":0.56},{"shared":3.5,"sold":1.07},{"shared":22.83,"sold":1.52},{"shared":78.57,"sold":2.16},{"shared":178.79,"sold":11.69},{"shared":260.35,"sold":60.54},{"shared":264.1,"sold":133.43},{"shared":302.78,"sold":151.05},{"shared":300.25,"sold":154.46},{"shared":241.09,"sold":215.09},{"shared":230.78,"sold":258.75},{"shared":213.18,"sold":252.66},{"shared":188.92,"sold":250.08},{"shared":163.31,"sold":196.63},{"shared":108.21,"sold":70.93},{"shared":34.43,"sold":2.28},{"shared":7.55,"sold":1.27},{"shared":5.53,"sold":1.04},{"shared":1.76,"sold":0.8},{"shared":0.79,"sold":0.77}],[{"shared":0.73,"sold":0.7},{"shared":0.57,"sold":0.78},{"shared":0.4,"sold":0.77},{"shared":0.48,"sold":0.76},{"shared":0.2,"sold":0.67},{"shared":1.99,"sold":1.04},{"shared":22.07,"sold":3.48},{"shared":61.59,"sold":59.37},{"shared":88.96,"sold":257.7},{"shared":90.78,"sold":415.12},{"shared":105.85,"sold":518.31},{"shared":98.15,"sold":500.25},{"shared":93.21,"sold":592.73},{"shared":83.71,"sold":750.59},{"shared":75.55,"sold":774.99},{"shared":74.56,"sold":777.34},{"shared":75.14,"sold":554.63},{"shared":77,"sold":373.84},{"shared":79.26,"sold":153},{"shared":39.35,"sold":8.61},{"shared":7.9,"sold":1.37},{"shared":2.46,"sold":0.93},{"shared":0.57,"sold":0.87},{"shared":0.84,"sold":0.82}],[{"shared":1.06,"sold":0.82},{"shared":0.52,"sold":0.78},{"shared":1.2,"sold":0.75},{"shared":0.39,"sold":0.88},{"shared":0.63,"sold":0.84},{"shared":4.83,"sold":1.22},{"shared":30.29,"sold":3.81},{"shared":69.79,"sold":121.02},{"shared":74,"sold":470.2},{"shared":80.1,"sold":656.3},{"shared":80.98,"sold":782.83},{"shared":86.09,"sold":843.26},{"shared":80.22,"sold":928.15},{"shared":81.95,"sold":916.18},{"shared":80.22,"sold":746.71},{"shared":77.73,"sold":652.19},{"shared":76.47,"sold":588.87},{"shared":74.2,"sold":356.5},{"shared":74.28,"sold":159.27},{"shared":40.4,"sold":14.39},{"shared":8.28,"sold":1.34},{"shared":2.58,"sold":0.93},{"shared":1.27,"sold":0.85},{"shared":0.66,"sold":0.85}]],"2026-06":[[{"shared":0.93,"sold":0.81},{"shared":1.33,"sold":0.85},{"shared":1.29,"sold":0.8},{"shared":0.95,"sold":0.81},{"shared":1.2,"sold":0.79},{"shared":7.08,"sold":1.29},{"shared":27.71,"sold":1.46},{"shared":105.67,"sold":2.78},{"shared":248.56,"sold":8.98},{"shared":321.06,"sold":12.11},{"shared":303.68,"sold":41.13},{"shared":321.92,"sold":19.43},{"shared":353.7,"sold":22.13},{"shared":325.3,"sold":94.4},{"shared":258.01,"sold":187.56},{"shared":228.09,"sold":118.74},{"shared":210.19,"sold":96.04},{"shared":203.6,"sold":51.87},{"shared":137.85,"sold":8.43},{"shared":38.79,"sold":1.84},{"shared":11.02,"sold":1.33},{"shared":2.06,"sold":0.7},{"shared":1.25,"sold":0.55},{"shared":1.5,"sold":0.67}],[{"shared":0.71,"sold":0.59},{"shared":0.22,"sold":0.52},{"shared":0.61,"sold":0.7},{"shared":1.17,"sold":0.72},{"shared":0.89,"sold":0.68},{"shared":8.15,"sold":1.1},{"shared":35.41,"sold":1.4},{"shared":123.37,"sold":3.09},{"shared":291.49,"sold":8.7},{"shared":310.95,"sold":13.25},{"shared":278.15,"sold":66.39},{"shared":324.33,"sold":25.63},{"shared":318.63,"sold":21.11},{"shared":305.96,"sold":33.11},{"shared":233.53,"sold":64.87},{"shared":231.79,"sold":39.91},{"shared":291.36,"sold":20.06},{"shared":232.94,"sold":16.24},{"shared":173.98,"sold":6.13},{"shared":65.98,"sold":2.22},{"shared":11.65,"sold":1.41},{"shared":1.34,"sold":0.82},{"shared":0.41,"sold":0.53},{"shared":0.5,"sold":0.63}],[{"shared":0.26,"sold":0.43},{"shared":0.3,"sold":0.52},{"shared":0.39,"sold":0.48},{"shared":0.23,"sold":0.53},{"shared":0.43,"sold":0.49},{"shared":4.23,"sold":0.87},{"shared":18.67,"sold":1.1},{"shared":56.14,"sold":1.53},{"shared":148.85,"sold":4.94},{"shared":181.16,"sold":7.44},{"shared":162.07,"sold":36.11},{"shared":180.23,"sold":15.55},{"shared":204.8,"sold":16.35},{"shared":243.42,"sold":35.3},{"shared":192.14,"sold":77.92},{"shared":209.59,"sold":69.36},{"shared":151.43,"sold":66.56},{"shared":167.22,"sold":39.09},{"shared":118.27,"sold":4.93},{"shared":37.41,"sold":1.5},{"shared":7.13,"sold":0.97},{"shared":0.86,"sold":0.56},{"shared":1.07,"sold":0.47},{"shared":0.42,"sold":0.41}],[{"shared":0.21,"sold":0.38},{"shared":0.47,"sold":0.53},{"shared":0.57,"sold":0.52},{"shared":0.28,"sold":0.49},{"shared":0.45,"sold":0.48},{"shared":5.04,"sold":0.96},{"shared":26.29,"sold":1.26},{"shared":89.55,"sold":2.63},{"shared":214.86,"sold":8.98},{"shared":266.12,"sold":21.48},{"shared":198.37,"sold":125.32},{"shared":241.47,"sold":48.57},{"shared":285.96,"sold":17.48},{"shared":275.31,"sold":43.48},{"shared":234.5,"sold":88.65},{"shared":223.76,"sold":55.31},{"shared":204.79,"sold":115},{"shared":207.69,"sold":33.14},{"shared":134.76,"sold":26.2},{"shared":38.25,"sold":1.53},{"shared":9.02,"sold":1.02},{"shared":2.6,"sold":0.79},{"shared":3.16,"sold":0.67},{"shared":1.25,"sold":0.6}],[{"shared":0.34,"sold":0.55},{"shared":0.4,"sold":0.54},{"shared":0.6,"sold":0.7},{"shared":0.36,"sold":0.53},{"shared":0.09,"sold":0.43},{"shared":4.89,"sold":0.88},{"shared":25.55,"sold":1.31},{"shared":67.68,"sold":1.93},{"shared":169.07,"sold":6.5},{"shared":225.29,"sold":9.85},{"shared":220.6,"sold":20.44},{"shared":251.77,"sold":16.85},{"shared":257.09,"sold":9.8},{"shared":210.84,"sold":53.48},{"shared":187.11,"sold":38.02},{"shared":187.6,"sold":60.45},{"shared":153.51,"sold":63.92},{"shared":164.31,"sold":35.25},{"shared":100.85,"sold":23.09},{"shared":29.55,"sold":1.54},{"shared":6.42,"sold":1.14},{"shared":1.81,"sold":0.74},{"shared":1.09,"sold":0.59},{"shared":0.7,"sold":0.64}],[{"shared":0.42,"sold":0.58},{"shared":0.08,"sold":0.42},{"shared":0.2,"sold":0.53},{"shared":0.29,"sold":0.59},{"shared":0.59,"sold":0.63},{"shared":5.86,"sold":0.88},{"shared":28.14,"sold":6.53},{"shared":51.26,"sold":92.88},{"shared":67.1,"sold":310.22},{"shared":76,"sold":451.1},{"shared":79.07,"sold":558.28},{"shared":76.79,"sold":592.62},{"shared":68.74,"sold":667.97},{"shared":65.78,"sold":628.38},{"shared":63.82,"sold":665.11},{"shared":65.72,"sold":575.66},{"shared":75.78,"sold":369.87},{"shared":69.15,"sold":300.43},{"shared":62.51,"sold":172.24},{"shared":35.9,"sold":21.94},{"shared":11.7,"sold":2.87},{"shared":2.77,"sold":1.37},{"shared":1.61,"sold":0.83},{"shared":1.07,"sold":0.79}],[{"shared":0.98,"sold":0.7},{"shared":0.9,"sold":0.72},{"shared":0.87,"sold":0.71},{"shared":1.44,"sold":0.7},{"shared":0.5,"sold":0.67},{"shared":6.48,"sold":1.23},{"shared":31,"sold":9.1},{"shared":56.4,"sold":120.59},{"shared":60.11,"sold":359.28},{"shared":58.16,"sold":491.86},{"shared":58.84,"sold":617.49},{"shared":59.4,"sold":638.86},{"shared":58.57,"sold":684.23},{"shared":60.89,"sold":718.11},{"shared":59.52,"sold":699.88},{"shared":65.25,"sold":601.13},{"shared":68.77,"sold":516.94},{"shared":67.62,"sold":289.42},{"shared":66,"sold":129.26},{"shared":48.87,"sold":24.85},{"shared":11.08,"sold":1.75},{"shared":1.23,"sold":0.67},{"shared":1.57,"sold":0.61},{"shared":1.52,"sold":0.68}]],"2026-07":[[{"shared":0.86,"sold":0.7},{"shared":0.54,"sold":0.67},{"shared":0.44,"sold":0.61},{"shared":0.61,"sold":0.64},{"shared":0.6,"sold":0.72},{"shared":3.14,"sold":0.93},{"shared":18.17,"sold":1.14},{"shared":54.35,"sold":1.8},{"shared":143.45,"sold":22.27},{"shared":183.96,"sold":88.41},{"shared":213.44,"sold":106.57},{"shared":247.33,"sold":134.21},{"shared":226.26,"sold":142.63},{"shared":190.28,"sold":180.91},{"shared":223.02,"sold":161.03},{"shared":222.14,"sold":103.59},{"shared":192.72,"sold":79.91},{"shared":163.34,"sold":48.54},{"shared":108.27,"sold":21.75},{"shared":28.45,"sold":1.34},{"shared":6.84,"sold":1.08},{"shared":2.89,"sold":0.69},{"shared":1.97,"sold":0.68},{"shared":0.71,"sold":0.69}],[{"shared":0.47,"sold":0.64},{"shared":1.28,"sold":0.65},{"shared":0.46,"sold":0.73},{"shared":0.53,"sold":0.64},{"shared":0.17,"sold":0.45},{"shared":3.67,"sold":0.9},{"shared":24.4,"sold":1.2},{"shared":60.45,"sold":1.42},{"shared":177.02,"sold":4.06},{"shared":229.92,"sold":6.32},{"shared":267.27,"sold":21.73},{"shared":263.72,"sold":15.59},{"shared":284.5,"sold":29.74},{"shared":237.41,"sold":7.76},{"shared":270.63,"sold":21.17},{"shared":228.95,"sold":26.54},{"shared":194.44,"sold":70.78},{"shared":150.18,"sold":12.62},{"shared":81.67,"sold":2.41},{"shared":26.52,"sold":1.18},{"shared":4.51,"sold":0.94},{"shared":3.32,"sold":0.79},{"shared":1.05,"sold":0.65},{"shared":0.56,"sold":0.66}],[{"shared":0.53,"sold":0.73},{"shared":0.94,"sold":0.85},{"shared":0.48,"sold":0.84},{"shared":0.29,"sold":0.65},{"shared":0.37,"sold":0.69},{"shared":4.07,"sold":1.12},{"shared":28.21,"sold":1.43},{"shared":96.45,"sold":2.31},{"shared":210.13,"sold":6.34},{"shared":264.42,"sold":8.54},{"shared":279.65,"sold":40.31},{"shared":312,"sold":45.62},{"shared":275.44,"sold":91.81},{"shared":255.94,"sold":107.92},{"shared":219.9,"sold":186.38},{"shared":236.37,"sold":146.64},{"shared":223.67,"sold":115.34},{"shared":181.9,"sold":60.44},{"shared":111.62,"sold":22.9},{"shared":44.29,"sold":4.3},{"shared":10.57,"sold":1.36},{"shared":2.21,"sold":0.77},{"shared":2.35,"sold":0.64},{"shared":1.21,"sold":0.9}],[{"shared":0.82,"sold":0.84},{"shared":0.58,"sold":0.74},{"shared":0.7,"sold":0.83},{"shared":0.8,"sold":0.92},{"shared":0.74,"sold":0.76},{"shared":2.62,"sold":0.88},{"shared":19.13,"sold":1.31},{"shared":86.76,"sold":2.47},{"shared":189.98,"sold":6.13},{"shared":252.77,"sold":8.2},{"shared":267.64,"sold":79.01},{"shared":329.06,"sold":17.32},{"shared":349.91,"sold":21},{"shared":313.58,"sold":111.04},{"shared":277.63,"sold":185.49},{"shared":275.22,"sold":144.11},{"shared":248.83,"sold":182.12},{"shared":241.99,"sold":110.36},{"shared":154.42,"sold":63.28},{"shared":43.73,"sold":3.1},{"shared":9.36,"sold":1.41},{"shared":3.38,"sold":0.98},{"shared":2.63,"sold":0.89},{"shared":1.59,"sold":0.77}],[{"shared":1.05,"sold":0.87},{"shared":1.72,"sold":0.89},{"shared":1.07,"sold":0.86},{"shared":0.76,"sold":0.83},{"shared":0.76,"sold":0.74},{"shared":3.76,"sold":1.04},{"shared":25.48,"sold":1.39},{"shared":97.37,"sold":2.31},{"shared":255.4,"sold":7.75},{"shared":291.13,"sold":9.28},{"shared":324.49,"sold":47.64},{"shared":326.87,"sold":65.69},{"shared":297.57,"sold":77.01},{"shared":320.24,"sold":137.46},{"shared":259.44,"sold":188.35},{"shared":251.62,"sold":155.65},{"shared":223.87,"sold":213.04},{"shared":202.99,"sold":145.25},{"shared":125.97,"sold":44.78},{"shared":52.24,"sold":2.44},{"shared":9.3,"sold":1.35},{"shared":4.27,"sold":1.04},{"shared":1.86,"sold":0.86},{"shared":2.7,"sold":0.97}],[{"shared":1.01,"sold":0.74},{"shared":0.62,"sold":0.72},{"shared":0.86,"sold":0.73},{"shared":0.84,"sold":0.79},{"shared":0.58,"sold":0.73},{"shared":4.52,"sold":0.92},{"shared":25.42,"sold":3.01},{"shared":58.94,"sold":55.53},{"shared":79.36,"sold":212.78},{"shared":90.11,"sold":361.36},{"shared":89.63,"sold":525.91},{"shared":98.01,"sold":475.49},{"shared":87.44,"sold":583.3},{"shared":84.97,"sold":609.34},{"shared":77.6,"sold":660.75},{"shared":77.09,"sold":529.88},{"shared":81.62,"sold":452.65},{"shared":76.76,"sold":307.39},{"shared":72.86,"sold":126.59},{"shared":40.47,"sold":13.93},{"shared":7.51,"sold":1.19},{"shared":3.22,"sold":0.82},{"shared":2.04,"sold":0.82},{"shared":1.19,"sold":0.74}],[{"shared":0.92,"sold":0.76},{"shared":1.06,"sold":0.76},{"shared":0.59,"sold":0.66},{"shared":0.42,"sold":0.68},{"shared":0.41,"sold":0.7},{"shared":4.18,"sold":0.94},{"shared":18.92,"sold":1.97},{"shared":53.98,"sold":33},{"shared":69.72,"sold":137.35},{"shared":66.12,"sold":245.41},{"shared":74.55,"sold":401.63},{"shared":74.93,"sold":382.21},{"shared":77.43,"sold":316.19},{"shared":75.94,"sold":357.04},{"shared":81.69,"sold":315.93},{"shared":80.24,"sold":292.73},{"shared":77.43,"sold":343.99},{"shared":78.57,"sold":254.61},{"shared":67.88,"sold":98.57},{"shared":36.92,"sold":10.25},{"shared":8.27,"sold":1.13},{"shared":1.75,"sold":0.71},{"shared":1.1,"sold":0.7},{"shared":1.75,"sold":0.69}]],"2026-08":[[{"shared":1.21,"sold":0.67},{"shared":1.27,"sold":0.7},{"shared":1.19,"sold":0.66},{"shared":1.19,"sold":0.64},{"shared":1.38,"sold":0.58},{"shared":1.53,"sold":0.64},{"shared":11.78,"sold":0.79},{"shared":50.53,"sold":0.91},{"shared":99.49,"sold":0.66},{"shared":177.72,"sold":0.75},{"shared":230.52,"sold":21.4},{"shared":293.58,"sold":1.35},{"shared":334.32,"sold":1.21},{"shared":345.41,"sold":1.3},{"shared":300.06,"sold":13.96},{"shared":274.09,"sold":1.57},{"shared":264.82,"sold":4.29},{"shared":196.62,"sold":1.06},{"shared":75.43,"sold":0.92},{"shared":21.72,"sold":0.92},{"shared":3.92,"sold":0.68},{"shared":2.06,"sold":0.47},{"shared":1.77,"sold":0.61},{"shared":1.99,"sold":0.57}],[{"shared":0.39,"sold":0.37},{"shared":0.47,"sold":0.37},{"shared":0.91,"sold":0.53},{"shared":0.87,"sold":0.52},{"shared":0.45,"sold":0.32},{"shared":0.86,"sold":0.4},{"shared":8.61,"sold":0.57},{"shared":39.89,"sold":0.7},{"shared":121.28,"sold":0.67},{"shared":190.55,"sold":0.68},{"shared":208.8,"sold":12.56},{"shared":268.77,"sold":7},{"shared":274.78,"sold":1.06},{"shared":266.49,"sold":11.19},{"shared":221.69,"sold":43.96},{"shared":236.98,"sold":31.77},{"shared":186.12,"sold":8.87},{"shared":86.65,"sold":0.74},{"shared":35.33,"sold":0.71},{"shared":7.94,"sold":0.71},{"shared":2.66,"sold":0.49},{"shared":2.48,"sold":0.46},{"shared":3,"sold":0.57},{"shared":1.12,"sold":0.38}],[{"shared":0.49,"sold":0.38},{"shared":1.11,"sold":0.48},{"shared":0.78,"sold":0.47},{"shared":0.43,"sold":0.39},{"shared":0.43,"sold":0.37},{"shared":0.92,"sold":0.45},{"shared":7.17,"sold":0.52},{"shared":28.94,"sold":0.61},{"shared":73.44,"sold":0.6},{"shared":112.71,"sold":0.66},{"shared":175.47,"sold":8.95},{"shared":212.96,"sold":0.92},{"shared":220.76,"sold":8.59},{"shared":230.13,"sold":38.07},{"shared":246.58,"sold":41.24},{"shared":198.48,"sold":21.41},{"shared":201.44,"sold":17.59},{"shared":169.02,"sold":0.82},{"shared":78.21,"sold":0.78},{"shared":16.23,"sold":0.7},{"shared":2.69,"sold":0.49},{"shared":1.16,"sold":0.38},{"shared":2,"sold":0.5},{"shared":1.11,"sold":0.51}],[{"shared":0.72,"sold":0.48},{"shared":0.69,"sold":0.43},{"shared":0.8,"sold":0.51},{"shared":0.83,"sold":0.51},{"shared":1.09,"sold":0.58},{"shared":0.62,"sold":0.39},{"shared":11.71,"sold":0.55},{"shared":37.61,"sold":0.62},{"shared":86.02,"sold":0.69},{"shared":201.93,"sold":0.86},{"shared":218.28,"sold":22.71},{"shared":245.37,"sold":21.6},{"shared":234.05,"sold":59.33},{"shared":242.19,"sold":68.78},{"shared":233.13,"sold":65.32},{"shared":154.76,"sold":91.65},{"shared":153.88,"sold":50.51},{"shared":159.52,"sold":1.27},{"shared":62.34,"sold":0.71},{"shared":10.24,"sold":0.63},{"shared":3.47,"sold":0.55},{"shared":2.58,"sold":0.56},{"shared":1.76,"sold":0.41},{"shared":0.91,"sold":0.42}],[{"shared":0.59,"sold":0.35},{"shared":0.69,"sold":0.43},{"shared":0.63,"sold":0.38},{"shared":0.5,"sold":0.35},{"shared":0.5,"sold":0.41},{"shared":1.07,"sold":0.54},{"shared":6.92,"sold":0.52},{"shared":37.21,"sold":0.48},{"shared":100.19,"sold":0.7},{"shared":180.46,"sold":0.8},{"shared":186.54,"sold":45.44},{"shared":262.82,"sold":8.46},{"shared":275.79,"sold":38.77},{"shared":238.22,"sold":88.57},{"shared":225.17,"sold":143.94},{"shared":236.12,"sold":114.72},{"shared":171.68,"sold":91.89},{"shared":107.58,"sold":44.88},{"shared":41.28,"sold":4.63},{"shared":9.7,"sold":0.69},{"shared":2.8,"sold":0.57},{"shared":2.41,"sold":0.55},{"shared":1.41,"sold":0.44},{"shared":1.36,"sold":0.5}],[{"shared":1.22,"sold":0.69},{"shared":1.26,"sold":0.66},{"shared":0.84,"sold":0.55},{"shared":0.85,"sold":0.51},{"shared":1.38,"sold":0.58},{"shared":1.34,"sold":0.67},{"shared":6.83,"sold":0.86},{"shared":36.24,"sold":0.8},{"shared":107.68,"sold":14.18},{"shared":118.51,"sold":161.22},{"shared":116.14,"sold":304.26},{"shared":128.39,"sold":482.86},{"shared":114.27,"sold":573.09},{"shared":112.23,"sold":671.7},{"shared":105.53,"sold":693.07},{"shared":102.66,"sold":590.18},{"shared":96.2,"sold":569.03},{"shared":92.42,"sold":321.35},{"shared":70.09,"sold":62.86},{"shared":24.46,"sold":1.63},{"shared":4.99,"sold":0.85},{"shared":3.4,"sold":0.7},{"shared":1.62,"sold":0.66},{"shared":1.9,"sold":0.65}],[{"shared":1.09,"sold":0.68},{"shared":1.71,"sold":0.63},{"shared":0.87,"sold":0.62},{"shared":1.07,"sold":0.57},{"shared":0.97,"sold":0.6},{"shared":1.1,"sold":0.51},{"shared":10.14,"sold":0.83},{"shared":50.72,"sold":12.46},{"shared":99.37,"sold":119.34},{"shared":110.04,"sold":257.14},{"shared":100.28,"sold":470.52},{"shared":108.37,"sold":532.29},{"shared":137.73,"sold":545.7},{"shared":105.73,"sold":558.76},{"shared":105.34,"sold":617.12},{"shared":110.46,"sold":635.94},{"shared":117.24,"sold":487.21},{"shared":91.82,"sold":322.73},{"shared":74.27,"sold":80.55},{"shared":20.24,"sold":2.7},{"shared":6.99,"sold":0.83},{"shared":4.94,"sold":0.77},{"shared":2.63,"sold":0.71},{"shared":1.1,"sold":0.68}]],"2026-09":[[{"shared":0.81,"sold":0.5},{"shared":0.47,"sold":0.4},{"shared":0.31,"sold":0.36},{"shared":0.43,"sold":0.41},{"shared":1.68,"sold":0.5},{"shared":0.31,"sold":0.4},{"shared":0.9,"sold":0.41},{"shared":12.3,"sold":0.72},{"shared":49.26,"sold":0.84},{"shared":107.26,"sold":1.48},{"shared":124.35,"sold":39.47},{"shared":204.45,"sold":5.88},{"shared":206.67,"sold":10.95},{"shared":206.36,"sold":57.89},{"shared":209.98,"sold":42.78},{"shared":220.72,"sold":10.95},{"shared":153.33,"sold":5.76},{"shared":49.96,"sold":1.04},{"shared":32.36,"sold":0.88},{"shared":21.63,"sold":0.61},{"shared":23.9,"sold":0.49},{"shared":23.91,"sold":0.49},{"shared":0.86,"sold":0.28},{"shared":0.29,"sold":0.35}],[{"shared":1.07,"sold":0.61},{"shared":1.07,"sold":0.71},{"shared":0.48,"sold":0.42},{"shared":0.23,"sold":0.37},{"shared":1.06,"sold":0.55},{"shared":1.48,"sold":0.67},{"shared":1.92,"sold":0.7},{"shared":21.08,"sold":0.81},{"shared":106.73,"sold":1.28},{"shared":199.59,"sold":2.11},{"shared":265.11,"sold":8.01},{"shared":270.55,"sold":4.18},{"shared":296.69,"sold":2.73},{"shared":296.56,"sold":14.22},{"shared":300.38,"sold":56},{"shared":284.07,"sold":61.58},{"shared":208.97,"sold":14.63},{"shared":105.48,"sold":1.38},{"shared":27.24,"sold":1.12},{"shared":13.88,"sold":0.83},{"shared":21.34,"sold":0.7},{"shared":25.42,"sold":0.66},{"shared":1.93,"sold":0.42},{"shared":0.94,"sold":0.46}],[{"shared":1.11,"sold":0.63},{"shared":0.88,"sold":0.56},{"shared":0.53,"sold":0.53},{"shared":0.67,"sold":0.54},{"shared":0.7,"sold":0.57},{"shared":1.02,"sold":0.57},{"shared":2.08,"sold":0.55},{"shared":19.12,"sold":0.87},{"shared":86.51,"sold":1.06},{"shared":213.9,"sold":2.31},{"shared":256.48,"sold":17.84},{"shared":296.7,"sold":11.05},{"shared":252.73,"sold":4.5},{"shared":275.4,"sold":7.29},{"shared":298.92,"sold":4.65},{"shared":255.7,"sold":4.15},{"shared":172.04,"sold":3.44},{"shared":70.2,"sold":1.15},{"shared":40.18,"sold":1.06},{"shared":29.55,"sold":0.75},{"shared":28.64,"sold":0.67},{"shared":27.5,"sold":0.64},{"shared":2.38,"sold":0.46},{"shared":0.38,"sold":0.39}],[{"shared":0.63,"sold":0.48},{"shared":0.76,"sold":0.52},{"shared":0.33,"sold":0.36},{"shared":0.26,"sold":0.36},{"shared":0.22,"sold":0.35},{"shared":0.57,"sold":0.4},{"shared":2.26,"sold":0.59},{"shared":16.79,"sold":0.69},{"shared":49.1,"sold":0.81},{"shared":130.79,"sold":1.42},{"shared":177.84,"sold":1.76},{"shared":214.66,"sold":4.13},{"shared":206.46,"sold":7.55},{"shared":201.16,"sold":3.72},{"shared":216.97,"sold":11.47},{"shared":206.88,"sold":9.01},{"shared":139.54,"sold":1.46},{"shared":60.93,"sold":1.03},{"shared":28.53,"sold":0.9},{"shared":13.84,"sold":0.48},{"shared":7.5,"sold":0.38},{"shared":9.25,"sold":0.47},{"shared":1.51,"sold":0.38},{"shared":0.16,"sold":0.27}],[{"shared":0.43,"sold":0.37},{"shared":0.96,"sold":0.56},{"shared":0.56,"sold":0.45},{"shared":0.1,"sold":0.24},{"shared":0.18,"sold":0.28},{"shared":0.79,"sold":0.43},{"shared":2.34,"sold":0.59},{"shared":14.59,"sold":0.66},{"shared":55.5,"sold":0.89},{"shared":107.07,"sold":1.35},{"shared":164.24,"sold":1.84},{"shared":194.26,"sold":1.86},{"shared":205.42,"sold":2.03},{"shared":158.35,"sold":9.95},{"shared":183.51,"sold":22.89},{"shared":186.72,"sold":4.19},{"shared":131.54,"sold":5.61},{"shared":66.98,"sold":1.03},{"shared":29.48,"sold":0.83},{"shared":12,"sold":0.46},{"shared":14.23,"sold":0.38},{"shared":11.76,"sold":0.39},{"shared":0.72,"sold":0.32},{"shared":0.26,"sold":0.33}],[{"shared":1.19,"sold":0.42},{"shared":0.53,"sold":0.45},{"shared":0.49,"sold":0.31},{"shared":0.13,"sold":0.28},{"shared":0.41,"sold":0.37},{"shared":1.08,"sold":0.45},{"shared":0.82,"sold":0.49},{"shared":15.13,"sold":0.73},{"shared":62.89,"sold":21.07},{"shared":110.98,"sold":69.13},{"shared":120.45,"sold":153.89},{"shared":108.59,"sold":291.36},{"shared":91.72,"sold":368.93},{"shared":67.62,"sold":529.65},{"shared":64.13,"sold":499.18},{"shared":69.1,"sold":455.8},{"shared":68.56,"sold":329.57},{"shared":60.83,"sold":98.51},{"shared":25.22,"sold":4.03},{"shared":14.62,"sold":0.7},{"shared":15.5,"sold":0.61},{"shared":14.91,"sold":0.62},{"shared":1.54,"sold":0.55},{"shared":1.14,"sold":0.49}],[{"shared":1.01,"sold":0.51},{"shared":0.52,"sold":0.5},{"shared":0.63,"sold":0.53},{"shared":0.97,"sold":0.57},{"shared":0.68,"sold":0.47},{"shared":0.44,"sold":0.43},{"shared":1.75,"sold":0.59},{"shared":16.76,"sold":0.95},{"shared":56.89,"sold":5.13},{"shared":100.44,"sold":81.15},{"shared":72.12,"sold":264.69},{"shared":77.86,"sold":226.77},{"shared":84.69,"sold":258.01},{"shared":68.98,"sold":339.52},{"shared":62.83,"sold":318.51},{"shared":65.28,"sold":247.09},{"shared":56.34,"sold":178.23},{"shared":39.52,"sold":58.05},{"shared":19.94,"sold":2.4},{"shared":10.62,"sold":0.5},{"shared":12.97,"sold":0.56},{"shared":10.93,"sold":0.49},{"shared":1.85,"sold":0.42},{"shared":1.14,"sold":0.46}]],"2026-10":[[{"shared":0.95,"sold":0.44},{"shared":0.3,"sold":0.34},{"shared":0.21,"sold":0.26},{"shared":0.57,"sold":0.43},{"shared":1.42,"sold":0.45},{"shared":0.46,"sold":0.33},{"shared":0.75,"sold":0.43},{"shared":5.48,"sold":0.49},{"shared":35.52,"sold":0.79},{"shared":73.47,"sold":1.01},{"shared":134.68,"sold":1.71},{"shared":121.33,"sold":1.72},{"shared":95.72,"sold":1.8},{"shared":84.83,"sold":1.82},{"shared":90.5,"sold":4.08},{"shared":84.13,"sold":12.49},{"shared":51.49,"sold":1.06},{"shared":11.74,"sold":0.61},{"shared":19.65,"sold":0.39},{"shared":17.29,"sold":0.3},{"shared":15.71,"sold":0.36},{"shared":10.49,"sold":0.24},{"shared":1.13,"sold":0.29},{"shared":0.44,"sold":0.32}],[{"shared":0.47,"sold":0.35},{"shared":0.56,"sold":0.42},{"shared":0.09,"sold":0.24},{"shared":0.05,"sold":0.2},{"shared":0.78,"sold":0.32},{"shared":0.71,"sold":0.45},{"shared":0.48,"sold":0.33},{"shared":7.55,"sold":0.44},{"shared":49.4,"sold":0.91},{"shared":112.94,"sold":1.64},{"shared":151.91,"sold":2.11},{"shared":154.81,"sold":2.26},{"shared":146.66,"sold":2.5},{"shared":171.34,"sold":2.57},{"shared":189.43,"sold":6.1},{"shared":130.18,"sold":7.07},{"shared":55.19,"sold":1.14},{"shared":13.89,"sold":0.69},{"shared":21.62,"sold":0.5},{"shared":22.42,"sold":0.44},{"shared":23.35,"sold":0.45},{"shared":13.89,"sold":0.34},{"shared":1.29,"sold":0.34},{"shared":0.87,"sold":0.43}],[{"shared":0.86,"sold":0.5},{"shared":0.68,"sold":0.46},{"shared":0.46,"sold":0.38},{"shared":0.2,"sold":0.25},{"shared":0.47,"sold":0.39},{"shared":0.79,"sold":0.46},{"shared":1.1,"sold":0.39},{"shared":6.61,"sold":0.44},{"shared":38.31,"sold":0.62},{"shared":79.11,"sold":1.34},{"shared":146.78,"sold":2.15},{"shared":130.85,"sold":2.04},{"shared":138.72,"sold":2.4},{"shared":152.54,"sold":2.97},{"shared":140.54,"sold":22.63},{"shared":106.67,"sold":14.59},{"shared":57.51,"sold":1.98},{"shared":13.74,"sold":0.7},{"shared":17.91,"sold":0.42},{"shared":19.11,"sold":0.35},{"shared":16.77,"sold":0.43},{"shared":12.43,"sold":0.3},{"shared":0.55,"sold":0.16},{"shared":1.9,"sold":0.45}],[{"shared":0.7,"sold":0.52},{"shared":0.23,"sold":0.37},{"shared":0.42,"sold":0.36},{"shared":0.42,"sold":0.42},{"shared":1.17,"sold":0.6},{"shared":0.78,"sold":0.46},{"shared":0.89,"sold":0.46},{"shared":4.6,"sold":0.67},{"shared":48.36,"sold":1.06},{"shared":114.14,"sold":1.68},{"shared":162.01,"sold":4.45},{"shared":174.76,"sold":2.67},{"shared":177.71,"sold":2.9},{"shared":194.52,"sold":25.89},{"shared":204.26,"sold":15.71},{"shared":158.63,"sold":2.43},{"shared":66.84,"sold":1.38},{"shared":13.99,"sold":0.81},{"shared":32.42,"sold":0.54},{"shared":37.99,"sold":0.44},{"shared":35.69,"sold":0.54},{"shared":21.24,"sold":0.34},{"shared":1.09,"sold":0.35},{"shared":0.96,"sold":0.45}],[{"shared":0.58,"sold":0.45},{"shared":0.37,"sold":0.34},{"shared":0.59,"sold":0.41},{"shared":0.71,"sold":0.47},{"shared":1.03,"sold":0.57},{"shared":0.46,"sold":0.38},{"shared":1.09,"sold":0.63},{"shared":6.47,"sold":0.69},{"shared":49.01,"sold":0.83},{"shared":134.63,"sold":2},{"shared":191.06,"sold":12.47},{"shared":173.93,"sold":2.66},{"shared":143.04,"sold":2.5},{"shared":156.68,"sold":21.61},{"shared":142.63,"sold":48.16},{"shared":140.79,"sold":13.09},{"shared":60.54,"sold":1.31},{"shared":14.05,"sold":0.85},{"shared":24.77,"sold":0.65},{"shared":25.5,"sold":0.43},{"shared":30.63,"sold":0.49},{"shared":8.47,"sold":0.42},{"shared":0.95,"sold":0.43},{"shared":1.16,"sold":0.54}],[{"shared":0.49,"sold":0.45},{"shared":0.62,"sold":0.44},{"shared":0.75,"sold":0.46},{"shared":0.61,"sold":0.4},{"shared":0.64,"sold":0.46},{"shared":1.31,"sold":0.48},{"shared":1.01,"sold":0.51},{"shared":2.77,"sold":0.6},{"shared":32.7,"sold":0.93},{"shared":94.46,"sold":12.6},{"shared":110.09,"sold":113.34},{"shared":89.87,"sold":177.99},{"shared":91.49,"sold":156.23},{"shared":88.29,"sold":166.79},{"shared":80.89,"sold":189.52},{"shared":64.07,"sold":171.08},{"shared":47.05,"sold":63.53},{"shared":18.61,"sold":5.44},{"shared":32.86,"sold":0.67},{"shared":34.38,"sold":0.48},{"shared":34.97,"sold":0.55},{"shared":14.09,"sold":0.52},{"shared":1.05,"sold":0.48},{"shared":0.98,"sold":0.51}],[{"shared":0.26,"sold":0.36},{"shared":0.36,"sold":0.39},{"shared":0.67,"sold":0.41},{"shared":0.11,"sold":0.32},{"shared":0.7,"sold":0.36},{"shared":0.77,"sold":0.52},{"shared":0.91,"sold":0.52},{"shared":6.37,"sold":0.57},{"shared":28.39,"sold":15.8},{"shared":39.39,"sold":65.12},{"shared":61.16,"sold":152.81},{"shared":54.73,"sold":168.7},{"shared":56.36,"sold":174.9},{"shared":57.16,"sold":181.57},{"shared":57.99,"sold":215.45},{"shared":55.35,"sold":172.97},{"shared":48.4,"sold":52.44},{"shared":14.13,"sold":2.52},{"shared":28.63,"sold":0.42},{"shared":28.67,"sold":0.47},{"shared":37.24,"sold":0.4},{"shared":13.96,"sold":0.3},{"shared":0.85,"sold":0.33},{"shared":0.86,"sold":0.44}]]};
 
 let selectedYear = 'all';
-let selectedMonth = 'all'; // 'all' or '01','02',...'12'
+let selectedMonths = []; // month numbers '01'..'12'; empty = all months
+let showMonthCols = false; // tables: totals only (default) vs. per-month breakdown
+try { showMonthCols = localStorage.getItem('showMonthCols') === '1'; } catch (e) {}
 
 function fmt(n) {
   const parts = n.toFixed(2).split('.');
@@ -214,24 +227,34 @@ function getMonths() {
   return months.filter(m => {
     const [y, mo] = m.split('-');
     if (selectedYear !== 'all' && y !== selectedYear) return false;
-    if (selectedMonth !== 'all' && mo !== selectedMonth) return false;
+    if (selectedMonths.length && !selectedMonths.includes(mo)) return false;
     return true;
   });
 }
 
 function isFiltered() {
-  return selectedYear !== 'all' || selectedMonth !== 'all';
+  return selectedYear !== 'all' || selectedMonths.length > 0;
+}
+
+function getAvailableMonthColumns() {
+  // Months that can be shown as individual columns (none when only one month is in view)
+  const ms = getMonths();
+  return ms.length > 1 ? ms : [];
 }
 
 function getVisibleMonthColumns() {
-  // Months shown as individual columns in tables (when not filtered to single month)
-  if (selectedYear !== 'all' && selectedMonth === 'all') {
-    return months.filter(m => m.startsWith(selectedYear));
-  }
-  if (selectedYear === 'all' && selectedMonth === 'all') {
-    return months;
-  }
-  return [];
+  return showMonthCols ? getAvailableMonthColumns() : [];
+}
+function setShowMonthCols(v) {
+  showMonthCols = v;
+  try { localStorage.setItem('showMonthCols', v ? '1' : '0'); } catch (e) {}
+  renderAll();
+}
+function mcolTh(m, i, suffix) {
+  return '<th class="num mcol' + (i === 0 ? ' mcol-first' : '') + '">' + monthLabels[m] + (suffix ? '<span class="mcol-sub">' + suffix + '</span>' : '') + '</th>';
+}
+function mcolTd(i, content) {
+  return '<td class="num mcol' + (i === 0 ? ' mcol-first' : '') + '">' + content + '</td>';
 }
 
 function sumOverMonths(statsObj, ean, field) {
@@ -275,15 +298,40 @@ function renderFilters() {
   const sortedMonthNums = [...relevantMonthNums].sort();
 
   let mHtml = '<span class="filter-label">Měsíc:</span>';
-  mHtml += '<button class="month-btn ' + (selectedMonth === 'all' ? 'active' : '') + '" onclick="selectMonthNum(\'all\')">Vše</button>';
+  mHtml += '<button class="month-btn ' + (selectedMonths.length === 0 ? 'active' : '') + '" onclick="selectMonthNum(\'all\')">Vše</button>';
   for (const mo of sortedMonthNums) {
-    mHtml += '<button class="month-btn ' + (selectedMonth === mo ? 'active' : '') + '" onclick="selectMonthNum(\'' + mo + '\')">' + monthNames[parseInt(mo)] + '</button>';
+    mHtml += '<button class="month-btn ' + (selectedMonths.includes(mo) ? 'active' : '') + '" title="Kliknutím přidáte / odeberete měsíc" onclick="selectMonthNum(\'' + mo + '\')">' + monthNames[parseInt(mo)] + '</button>';
   }
   monthEl.innerHTML = mHtml;
+
+  // Column breakdown toggle (only meaningful when more than one month is in view)
+  const colsEl = document.getElementById('cols-filter');
+  const avail = getAvailableMonthColumns();
+  if (avail.length > 1) {
+    colsEl.style.display = '';
+    colsEl.innerHTML = '<span class="filter-label">Tabulky:</span>' +
+      '<button class="month-btn ' + (!showMonthCols ? 'active' : '') + '" onclick="setShowMonthCols(false)">Jen součty</button>' +
+      '<button class="month-btn ' + (showMonthCols ? 'active' : '') + '" onclick="setShowMonthCols(true)">Rozpis po měsících (' + avail.length + ')</button>' +
+      (showMonthCols ? '<span class="col-hint">Součty jsou vlevo, měsíce za nimi – tabulku lze posouvat do strany</span>' : '');
+  } else {
+    colsEl.style.display = 'none';
+    colsEl.innerHTML = '';
+  }
 }
 
-function selectYear(y) { selectedYear = y; selectedMonth = 'all'; renderAll(); }
-function selectMonthNum(mo) { selectedMonth = mo; renderAll(); }
+function selectYear(y) {
+  selectedYear = y;
+  // keep only month selections that exist in the newly selected year
+  selectedMonths = selectedMonths.filter(mo => months.some(m => m.endsWith('-' + mo) && (y === 'all' || m.startsWith(y))));
+  renderAll();
+}
+function selectMonthNum(mo) {
+  // multi-select: clicking a month toggles it; 'Vše' clears the selection
+  if (mo === 'all') selectedMonths = [];
+  else if (selectedMonths.includes(mo)) selectedMonths = selectedMonths.filter(x => x !== mo);
+  else selectedMonths = [...selectedMonths, mo].sort();
+  renderAll();
+}
 
 function renderSummary() {
   const ms = getMonths();
@@ -316,8 +364,10 @@ function renderProducers() {
   const ms = getMonths();
   const eans = Object.keys(producerStats).sort((a, b) => eanLabel(a).localeCompare(eanLabel(b)));
   let html = '<table><thead><tr><th>Výrobna</th><th>Vlastník</th>';
-  const visCols = getVisibleMonthColumns(); for (const m of visCols) html += '<th class="num">' + monthLabels[m] + '</th>';
-  html += '<th class="num">Přetoky (kWh)</th><th class="num">Nasdíleno (kWh)</th><th class="num">Prodáno (kWh)</th><th class="num">Efektivita</th></tr></thead><tbody>';
+  const visCols = getVisibleMonthColumns();
+  html += '<th class="num">Přetoky (kWh)</th><th class="num">Nasdíleno (kWh)</th><th class="num">Prodáno (kWh)</th><th class="num">Efektivita</th>';
+  visCols.forEach((m, i) => { html += mcolTh(m, i, 'nasdíleno'); });
+  html += '</tr></thead><tbody>';
 
   let totProd = 0, totShared = 0, totSurplus = 0;
   for (const ean of eans) {
@@ -328,23 +378,25 @@ function renderProducers() {
     totProd += prod; totShared += shared; totSurplus += surplus;
 
     html += '<tr><td>' + eanLabel(ean) + '</td><td>' + ownerTag(eanOwner(ean)) + '</td>';
-    for (const m of visCols) {
-      const s = producerStats[ean][m] ? producerStats[ean][m].shared : 0;
-      html += '<td class="num">' + fmt(s) + '</td>';
-    }
     html += '<td class="num">' + fmt(prod) + '</td><td class="num">' + fmt(shared) + '</td><td class="num">' + fmt(surplus) + '</td>';
-    html += '<td class="num eff ' + effClass(eff) + '">' + fmt(eff) + ' %</td></tr>';
+    html += '<td class="num eff ' + effClass(eff) + '">' + fmt(eff) + ' %</td>';
+    visCols.forEach((m, i) => {
+      const s = producerStats[ean][m] ? producerStats[ean][m].shared : 0;
+      html += mcolTd(i, fmt(s));
+    });
+    html += '</tr>';
   }
 
   const totEff = totProd > 0 ? totShared / totProd * 100 : 0;
   html += '<tr class="total-row"><td><strong>Celkem</strong></td><td></td>';
-  for (const m of visCols) {
+  html += '<td class="num">' + fmt(totProd) + '</td><td class="num">' + fmt(totShared) + '</td><td class="num">' + fmt(totSurplus) + '</td>';
+  html += '<td class="num eff ' + effClass(totEff) + '">' + fmt(totEff) + ' %</td>';
+  visCols.forEach((m, i) => {
     let mShared = 0;
     for (const ean of eans) { if (producerStats[ean][m]) mShared += producerStats[ean][m].shared; }
-    html += '<td class="num">' + fmt(mShared) + '</td>';
-  }
-  html += '<td class="num">' + fmt(totProd) + '</td><td class="num">' + fmt(totShared) + '</td><td class="num">' + fmt(totSurplus) + '</td>';
-  html += '<td class="num eff ' + effClass(totEff) + '">' + fmt(totEff) + ' %</td></tr>';
+    html += mcolTd(i, fmt(mShared));
+  });
+  html += '</tr>';
   html += '</tbody></table>';
   document.getElementById('producers-table').innerHTML = html;
 }
@@ -353,8 +405,10 @@ function renderConsumers() {
   const ms = getMonths();
   const eans = Object.keys(consumerStats).sort((a, b) => eanOwner(a).localeCompare(eanOwner(b)) || eanLabel(a).localeCompare(eanLabel(b)));
   let html = '<table><thead><tr><th>Odběrné místo</th><th>Vlastník</th>';
-  const visCols = getVisibleMonthColumns(); for (const m of visCols) html += '<th class="num">' + monthLabels[m] + '</th>';
-  html += '<th class="num">Spotřeba (kWh)</th><th class="num">Nasdíleno (kWh)</th><th class="num">Ze sítě (kWh)</th><th class="num">Pokrytí</th></tr></thead><tbody>';
+  const visCols = getVisibleMonthColumns();
+  html += '<th class="num">Spotřeba (kWh)</th><th class="num">Nasdíleno (kWh)</th><th class="num">Ze sítě (kWh)</th><th class="num">Pokrytí</th>';
+  visCols.forEach((m, i) => { html += mcolTh(m, i, 'nasdíleno'); });
+  html += '</tr></thead><tbody>';
 
   let totCons = 0, totReceived = 0, totGrid = 0;
   for (const ean of eans) {
@@ -365,23 +419,25 @@ function renderConsumers() {
     totCons += cons; totReceived += received; totGrid += grid;
 
     html += '<tr><td>' + eanLabel(ean) + '</td><td>' + ownerTag(eanOwner(ean)) + '</td>';
-    for (const m of visCols) {
-      const r = consumerStats[ean][m] ? consumerStats[ean][m].received : 0;
-      html += '<td class="num">' + fmt(r) + '</td>';
-    }
     html += '<td class="num">' + fmt(cons) + '</td><td class="num">' + fmt(received) + '</td><td class="num">' + fmt(grid) + '</td>';
-    html += '<td class="num eff ' + effClass(eff) + '">' + fmt(eff) + ' %</td></tr>';
+    html += '<td class="num eff ' + effClass(eff) + '">' + fmt(eff) + ' %</td>';
+    visCols.forEach((m, i) => {
+      const r = consumerStats[ean][m] ? consumerStats[ean][m].received : 0;
+      html += mcolTd(i, fmt(r));
+    });
+    html += '</tr>';
   }
 
   const totEff = totCons > 0 ? totReceived / totCons * 100 : 0;
   html += '<tr class="total-row"><td><strong>Celkem</strong></td><td></td>';
-  for (const m of visCols) {
+  html += '<td class="num">' + fmt(totCons) + '</td><td class="num">' + fmt(totReceived) + '</td><td class="num">' + fmt(totGrid) + '</td>';
+  html += '<td class="num eff ' + effClass(totEff) + '">' + fmt(totEff) + ' %</td>';
+  visCols.forEach((m, i) => {
     let mRcv = 0;
     for (const ean of eans) { if (consumerStats[ean][m]) mRcv += consumerStats[ean][m].received; }
-    html += '<td class="num">' + fmt(mRcv) + '</td>';
-  }
-  html += '<td class="num">' + fmt(totCons) + '</td><td class="num">' + fmt(totReceived) + '</td><td class="num">' + fmt(totGrid) + '</td>';
-  html += '<td class="num eff ' + effClass(totEff) + '">' + fmt(totEff) + ' %</td></tr>';
+    html += mcolTd(i, fmt(mRcv));
+  });
+  html += '</tr>';
   html += '</tbody></table>';
   document.getElementById('consumers-table').innerHTML = html;
 }
@@ -390,8 +446,9 @@ function renderOwnerProd() {
   const visCols = getVisibleMonthColumns();
   const ms = getMonths();
   let html = '<table><thead><tr><th>Vlastník</th>';
-  for (const m of visCols) html += '<th class="num">' + monthLabels[m] + ' (kWh)</th>';
-  html += '<th class="num">Celkem přetoky</th><th class="num">Celkem nasdíleno</th><th class="num">Efektivita</th></tr></thead><tbody>';
+  html += '<th class="num">Celkem přetoky</th><th class="num">Celkem nasdíleno</th><th class="num">Efektivita</th>';
+  visCols.forEach((m, i) => { html += mcolTh(m, i, 'nasdíleno / přetoky'); });
+  html += '</tr></thead><tbody>';
 
   for (const owner of owners) {
     let hasData = false;
@@ -400,17 +457,18 @@ function renderOwnerProd() {
 
     let totalProd = 0, totalShared = 0;
     html += '<tr><td>' + ownerTag(owner) + '</td>';
-    for (const m of visCols) {
-      const d = ownerProduction[owner][m] || {shared:0,production:0};
-      html += '<td class="num">' + fmt(d.shared) + ' / ' + fmt(d.production) + '</td>';
-    }
     for (const m of ms) {
       const d = ownerProduction[owner][m] || {production:0,shared:0};
       totalProd += d.production; totalShared += d.shared;
     }
     const eff = totalProd > 0 ? totalShared / totalProd * 100 : 0;
     html += '<td class="num">' + fmt(totalProd) + '</td><td class="num">' + fmt(totalShared) + '</td>';
-    html += '<td class="num eff ' + effClass(eff) + '">' + fmt(eff) + ' %</td></tr>';
+    html += '<td class="num eff ' + effClass(eff) + '">' + fmt(eff) + ' %</td>';
+    visCols.forEach((m, i) => {
+      const d = ownerProduction[owner][m] || {shared:0,production:0};
+      html += mcolTd(i, fmt(d.shared) + ' / ' + fmt(d.production));
+    });
+    html += '</tr>';
   }
   html += '</tbody></table>';
   document.getElementById('tab-owner-prod').innerHTML = html;
@@ -420,8 +478,9 @@ function renderOwnerCons() {
   const visCols = getVisibleMonthColumns();
   const ms = getMonths();
   let html = '<table><thead><tr><th>Vlastník</th>';
-  for (const m of visCols) html += '<th class="num">' + monthLabels[m] + ' (kWh)</th>';
-  html += '<th class="num">Celkem spotřeba</th><th class="num">Celkem přijato</th><th class="num">Pokrytí</th></tr></thead><tbody>';
+  html += '<th class="num">Celkem spotřeba</th><th class="num">Celkem přijato</th><th class="num">Pokrytí</th>';
+  visCols.forEach((m, i) => { html += mcolTh(m, i, 'přijato / spotřeba'); });
+  html += '</tr></thead><tbody>';
 
   for (const owner of owners) {
     let hasData = false;
@@ -430,17 +489,18 @@ function renderOwnerCons() {
 
     let totalCons = 0, totalRcv = 0;
     html += '<tr><td>' + ownerTag(owner) + '</td>';
-    for (const m of visCols) {
-      const d = ownerConsumption[owner][m] || {received:0,consumption:0};
-      html += '<td class="num">' + fmt(d.received) + ' / ' + fmt(d.consumption) + '</td>';
-    }
     for (const m of ms) {
       const d = ownerConsumption[owner][m] || {consumption:0,received:0};
       totalCons += d.consumption; totalRcv += d.received;
     }
     const eff = totalCons > 0 ? totalRcv / totalCons * 100 : 0;
     html += '<td class="num">' + fmt(totalCons) + '</td><td class="num">' + fmt(totalRcv) + '</td>';
-    html += '<td class="num eff ' + effClass(eff) + '">' + fmt(eff) + ' %</td></tr>';
+    html += '<td class="num eff ' + effClass(eff) + '">' + fmt(eff) + ' %</td>';
+    visCols.forEach((m, i) => {
+      const d = ownerConsumption[owner][m] || {received:0,consumption:0};
+      html += mcolTd(i, fmt(d.received) + ' / ' + fmt(d.consumption));
+    });
+    html += '</tr>';
   }
   html += '</tbody></table>';
   document.getElementById('tab-owner-cons').innerHTML = html;
@@ -493,8 +553,9 @@ function renderDetailAlloc() {
   const visCols = getVisibleMonthColumns();
   const srcEans = Object.keys(detailAlloc).sort((a,b) => eanLabel(a).localeCompare(eanLabel(b)));
   let html = '<table><thead><tr><th>Zdroj</th><th>Vlastník zdroje</th><th>Odběrné místo</th><th>Vlastník odběru</th>';
-  for (const m of visCols) html += '<th class="num">' + monthLabels[m] + '</th>';
-  html += '<th class="num">Celkem (kWh)</th></tr></thead><tbody>';
+  html += '<th class="num">Celkem (kWh)</th>';
+  visCols.forEach((m, i) => { html += mcolTh(m, i); });
+  html += '</tr></thead><tbody>';
 
   for (const srcEan of srcEans) {
     const dstEans = Object.keys(detailAlloc[srcEan]).sort((a,b) => eanLabel(a).localeCompare(eanLabel(b)));
@@ -505,11 +566,12 @@ function renderDetailAlloc() {
 
       html += '<tr><td>' + eanLabel(srcEan) + '</td><td>' + ownerTag(eanOwner(srcEan)) + '</td>';
       html += '<td>' + eanLabel(dstEan) + '</td><td>' + ownerTag(eanOwner(dstEan)) + '</td>';
-      for (const m of visCols) {
+      html += '<td class="num"><strong>' + fmt(total) + '</strong></td>';
+      visCols.forEach((m, i) => {
         const v = detailAlloc[srcEan][dstEan][m] || 0;
-        html += '<td class="num">' + (v > 0 ? fmt(v) : '-') + '</td>';
-      }
-      html += '<td class="num"><strong>' + fmt(total) + '</strong></td></tr>';
+        html += mcolTd(i, v > 0 ? fmt(v) : '-');
+      });
+      html += '</tr>';
     }
   }
   html += '</tbody></table>';
